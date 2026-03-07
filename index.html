@@ -1,45 +1,110 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WebRTC Demo</title>
-  </head>
-  <body>
-    <h2>1. Start your Webcam</h2>
-    <div class="videos">
-      <span>
-        <h3>Local Stream</h3>
-        <video id="webcamVideo" autoplay playsinline></video>
-      </span>
-      <span>
-        <h3>Remote Stream</h3>
-        <video id="remoteVideo" autoplay playsinline></video>
-      </span>
+<html>
+<head>
+<title>Manual WebRTC Chat</title>
+<style>
+textarea{width:100%;height:120px;margin-top:10px;}
+#chat{border:1px solid black;height:200px;overflow:auto;padding:5px;margin-top:10px;}
+</style>
+</head>
+<body>
 
+<h2>Manual WebRTC Chat</h2>
 
-    </div>
+<button id="createOffer">Create Offer</button>
+<button id="createAnswer">Create Answer</button>
 
-    <button id="webcamButton">Start webcam</button>
-    <h2>2. Create a new Call</h2>
-    <button id="callButton" disabled>Create Call (offer)</button>
+<h3>Local Description (send this)</h3>
+<textarea id="local"></textarea>
 
-    <h2>3. Join a Call</h2>
-    <p>Answer the call from a different browser window or device</p>
-    
-    <input id="callInput" />
-    <button id="answerButton" disabled>Answer</button>
+<h3>Paste Remote Description</h3>
+<textarea id="remote"></textarea>
+<button id="setRemote">Set Remote Description</button>
 
-    <h2>4. Hangup</h2>
+<h3>ICE Candidates (send these)</h3>
+<textarea id="iceLocal"></textarea>
 
-    <button id="hangupButton" disabled>Hangup</button>
-<!-- Firebase App (required core SDK) -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<h3>Paste Remote ICE Candidates</h3>
+<textarea id="iceRemote"></textarea>
+<button id="addIce">Add Remote ICE</button>
 
-<!-- Firestore -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="main.js"></script>
+<div id="chat"></div>
 
-  </body>
+<input id="msg" placeholder="message">
+<button id="send">Send</button>
+
+<script>
+
+const pc = new RTCPeerConnection({
+ iceServers:[{urls:"stun:stun.l.google.com:19302"}]
+});
+
+let channel;
+
+pc.onicecandidate = e=>{
+ if(e.candidate){
+  iceLocal.value += JSON.stringify(e.candidate) + "\n";
+ }
+};
+
+pc.ondatachannel = e=>{
+ channel = e.channel;
+ setupChannel();
+};
+
+function setupChannel(){
+ channel.onopen=()=>log("Connected!");
+ channel.onmessage=e=>log("Friend: "+e.data);
+}
+
+function log(t){
+ chat.innerHTML+=t+"<br>";
+ chat.scrollTop=chat.scrollHeight;
+}
+
+createOffer.onclick = async ()=>{
+ channel = pc.createDataChannel("chat");
+ setupChannel();
+
+ const offer = await pc.createOffer();
+ await pc.setLocalDescription(offer);
+
+ local.value = JSON.stringify(pc.localDescription);
+};
+
+createAnswer.onclick = async ()=>{
+ const remoteDesc = JSON.parse(remote.value);
+ await pc.setRemoteDescription(remoteDesc);
+
+ const answer = await pc.createAnswer();
+ await pc.setLocalDescription(answer);
+
+ local.value = JSON.stringify(pc.localDescription);
+};
+
+setRemote.onclick = async ()=>{
+ const desc = JSON.parse(remote.value);
+ await pc.setRemoteDescription(desc);
+};
+
+addIce.onclick = async ()=>{
+ const lines = iceRemote.value.trim().split("\n");
+
+ for(const line of lines){
+  if(line){
+   await pc.addIceCandidate(JSON.parse(line));
+  }
+ }
+};
+
+send.onclick = ()=>{
+ const text = msg.value;
+ channel.send(text);
+ log("You: "+text);
+ msg.value="";
+};
+
+</script>
+
+</body>
 </html>
