@@ -1,110 +1,131 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Manual WebRTC Chat</title>
-<style>
-textarea{width:100%;height:120px;margin-top:10px;}
-#chat{border:1px solid black;height:200px;overflow:auto;padding:5px;margin-top:10px;}
-</style>
+  <title>Manual WebRTC Text Chat</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 20px auto; }
+    textarea { width: 100%; height: 100px; margin: 5px 0; }
+    #messages { border: 1px solid #ccc; height: 200px; overflow-y: auto; padding: 5px; margin-bottom: 10px; }
+    input { width: calc(100% - 60px); }
+    button { width: 50px; }
+  </style>
 </head>
 <body>
+<h2>Manual WebRTC Text Chat</h2>
 
-<h2>Manual WebRTC Chat</h2>
+<div id="messages"></div>
+<input id="messageInput" placeholder="Type message"/>
+<button onclick="sendMessage()">Send</button>
 
-<button id="createOffer">Create Offer</button>
-<button id="createAnswer">Create Answer</button>
+<h3>Host</h3>
+<button onclick="createHost()">Create Offer</button>
+<textarea id="hostOffer" placeholder="Host Offer + ICE"></textarea>
+<textarea id="hostAnswer" placeholder="Paste Connector Answer"></textarea>
+<button onclick="pasteConnectorAnswer()">Paste Connector Answer</button>
 
-<h3>Local Description (send this)</h3>
-<textarea id="local"></textarea>
-
-<h3>Paste Remote Description</h3>
-<textarea id="remote"></textarea>
-<button id="setRemote">Set Remote Description</button>
-
-<h3>ICE Candidates (send these)</h3>
-<textarea id="iceLocal"></textarea>
-
-<h3>Paste Remote ICE Candidates</h3>
-<textarea id="iceRemote"></textarea>
-<button id="addIce">Add Remote ICE</button>
-
-<div id="chat"></div>
-
-<input id="msg" placeholder="message">
-<button id="send">Send</button>
+<h3>Connector</h3>
+<textarea id="connectorInput" placeholder="Paste Host Offer + ICE"></textarea>
+<button onclick="connectToHost()">Connect</button>
+<textarea id="connectorAnswer" placeholder="Connector Answer JSON (send back to host)"></textarea>
 
 <script>
+let pc;
+let dataChannel;
 
-const pc = new RTCPeerConnection({
- iceServers:[{urls:"stun:stun.l.google.com:19302"}]
-});
-
-let channel;
-
-pc.onicecandidate = e=>{
- if(e.candidate){
-  iceLocal.value += JSON.stringify(e.candidate) + "\n";
- }
+// STUN + TURN servers
+const servers = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    {
+      urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
+      username: 'webrtc',
+      credential: 'webrtc'
+    }
+  ]
 };
 
-pc.ondatachannel = e=>{
- channel = e.channel;
- setupChannel();
-};
-
-function setupChannel(){
- channel.onopen=()=>log("Connected!");
- channel.onmessage=e=>log("Friend: "+e.data);
+function logMessage(msg){
+  const messages = document.getElementById('messages');
+  messages.innerHTML += msg + '<br>';
+  messages.scrollTop = messages.scrollHeight;
 }
 
-function log(t){
- chat.innerHTML+=t+"<br>";
- chat.scrollTop=chat.scrollHeight;
+// ---------------- HOST ----------------
+async function createHost(){
+  pc = new RTCPeerConnection(servers);
+
+  dataChannel = pc.createDataChannel("chat");
+  dataChannel.onmessage = e => logMessage("Friend: " + e.data);
+  dataChannel.onopen = () => logMessage("Data channel open!");
+
+  let iceCandidates = [];
+  pc.onicecandidate = e => {
+    if(e.candidate) iceCandidates.push(e.candidate);
+    document.getElementById('hostOffer').value = JSON.stringify({
+      sdp: pc.localDescription,
+      ice: iceCandidates
+    });
+  };
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
 }
 
-createOffer.onclick = async ()=>{
- channel = pc.createDataChannel("chat");
- setupChannel();
+// Paste connector's answer to complete connection
+async function pasteConnectorAnswer(){
+  const text = document.getElementById('hostAnswer').value;
+  if(!text) return alert("Paste connector's JSON!");
+  const answer = JSON.parse(text);
+  await pc.setRemoteDescription(new RTCSessionDescription(answer.sdp));
+  for(let c of answer.ice) await pc.addIceCandidate(new RTCIceCandidate(c));
+  logMessage("Connection established!");
+}
 
- const offer = await pc.createOffer();
- await pc.setLocalDescription(offer);
+// ---------------- CONNECTOR ----------------
+async function connectToHost(){
+  const text = document.getElementById('connectorInput').value;
+  if(!text) return alert("Paste host offer!");
 
- local.value = JSON.stringify(pc.localDescription);
-};
+  const hostInfo = JSON.parse(text);
 
-createAnswer.onclick = async ()=>{
- const remoteDesc = JSON.parse(remote.value);
- await pc.setRemoteDescription(remoteDesc);
+  pc = new RTCPeerConnection(servers);
 
- const answer = await pc.createAnswer();
- await pc.setLocalDescription(answer);
+  pc.ondatachannel = e => {
+    dataChannel = e.channel;
+    dataChannel.onmessage = e => logMessage("Host: " + e.data);
+    dataChannel.onopen = () => logMessage("Data channel open!");
+  };
 
- local.value = JSON.stringify(pc.localDescription);
-};
+  let iceCandidates = [];
+  pc.onicecandidate = e => {
+    if(e.candidate) iceCandidates.push(e.candidate);
+    document.getElementById('connectorAnswer').value = JSON.stringify({
+      sdp: pc.localDescription,
+      ice: iceCandidates
+    });
+  };
 
-setRemote.onclick = async ()=>{
- const desc = JSON.parse(remote.value);
- await pc.setRemoteDescription(desc);
-};
+  await pc.setRemoteDescription(new RTCSessionDescription(hostInfo.sdp));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
 
-addIce.onclick = async ()=>{
- const lines = iceRemote.value.trim().split("\n");
-
- for(const line of lines){
-  if(line){
-   await pc.addIceCandidate(JSON.parse(line));
+  // Add host ICE candidates
+  for(let c of hostInfo.ice){
+    await pc.addIceCandidate(new RTCIceCandidate(c));
   }
- }
-};
+}
 
-send.onclick = ()=>{
- const text = msg.value;
- channel.send(text);
- log("You: "+text);
- msg.value="";
-};
-
+// Send chat message
+function sendMessage(){
+  const input = document.getElementById('messageInput');
+  if(dataChannel && dataChannel.readyState === "open"){
+    dataChannel.send(input.value);
+    logMessage("You: " + input.value);
+    input.value = "";
+  } else {
+    alert("Data channel not open yet!");
+  }
+}
 </script>
-
 </body>
 </html>
