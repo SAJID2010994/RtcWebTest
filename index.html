@@ -1,57 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Socket.IO Chat</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
-    #messages { list-style-type: none; padding: 0; max-height: 300px; overflow-y: scroll; }
-    #messages li { padding: 5px 10px; background: #fff; margin-bottom: 5px; border-radius: 5px; }
-    #chat-form { display: flex; }
-    #chat-form input { flex: 1; padding: 10px; font-size: 16px; }
-    #chat-form button { padding: 10px; font-size: 16px; }
-  </style>
+  <title>Socket.IO Voice Chat</title>
 </head>
 <body>
+<h2>Voice Chat (Socket.IO Only)</h2>
+<button onclick="joinRoom()">Join Room</button>
+<button onclick="startVoice()">Start Voice</button>
 
-<h2>Socket.IO Chat App</h2>
-
-<ul id="messages"></ul>
-
-<form id="chat-form">
-  <input id="message-input" autocomplete="off" placeholder="Type your message..." />
-  <button>Send</button>
-</form>
-
-<!-- Socket.IO client -->
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 <script>
-  // ⚡ Put your server domain here
-  const SERVER_DOMAIN = "https://aa630b57-5d1f-4117-b2f3-cce3bc70375f-00-3a2kdsk9dkizk.sisko.replit.dev/"; // <-- Replace with your server URL
+const socket = io();
 
-  const socket = io(SERVER_DOMAIN);
+let audioContext;
+let processor;
+let input;
+let stream;
+let room = "room1";
 
-  const form = document.getElementById('chat-form');
-  const input = document.getElementById('message-input');
-  const messages = document.getElementById('messages');
+// Join room
+function joinRoom() {
+    socket.emit("join-room", room);
+    console.log("Joined room:", room);
+}
 
-  // Send message
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (input.value) {
-      socket.emit('chat message', input.value);
-      input.value = '';
+// Start capturing microphone
+async function startVoice() {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    input = audioContext.createMediaStreamSource(stream);
+
+    processor = audioContext.createScriptProcessor(2048, 1, 1);
+    input.connect(processor);
+    processor.connect(audioContext.destination);
+
+    processor.onaudioprocess = e => {
+        const data = e.inputBuffer.getChannelData(0);
+        const buffer = floatTo16BitPCM(data);
+        const base64 = arrayBufferToBase64(buffer);
+        socket.emit("voice", { room, audioChunk: base64 });
+    };
+}
+
+// Convert float audio to 16-bit PCM
+function floatTo16BitPCM(float32Array) {
+    const buffer = new ArrayBuffer(float32Array.length * 2);
+    const view = new DataView(buffer);
+    let offset = 0;
+    for (let i = 0; i < float32Array.length; i++, offset += 2) {
+        let s = Math.max(-1, Math.min(1, float32Array[i]));
+        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
     }
-  });
+    return buffer;
+}
 
-  // Receive messages
-  socket.on('chat message', (msg) => {
-    const li = document.createElement('li');
-    li.textContent = msg;
-    messages.appendChild(li);
-    messages.scrollTop = messages.scrollHeight;
-  });
+// Convert ArrayBuffer to Base64
+function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
+
+// Convert Base64 to Float32
+function base64ToFloat32(base64) {
+    const binary = atob(base64);
+    const buffer = new ArrayBuffer(binary.length);
+    const view = new DataView(buffer);
+    for (let i = 0; i < binary.length; i++) {
+        view.setUint8(i, binary.charCodeAt(i));
+    }
+
+    const float32 = new Float32Array(buffer.byteLength / 2);
+    const dv = new DataView(buffer);
+    for (let i = 0; i < float32.length; i++) {
+        float32[i] = dv.getInt16(i*2, true) / 0x7fff;
+    }
+    return float32;
+}
+
+// Play received audio
+socket.on("voice", base64 => {
+    const float32 = base64ToFloat32(base64);
+    const buffer = audioContext.createBuffer(1, float32.length, audioContext.sampleRate);
+    buffer.copyToChannel(float32, 0);
+
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.start();
+});
 </script>
-
 </body>
 </html>
