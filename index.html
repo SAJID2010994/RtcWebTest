@@ -2,197 +2,128 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>PeerJS Chat (Cloudflare TURN)</title>
+  <title>PeerJS Voice Chat</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-
   <style>
-    body {
-      font-family: Arial;
-      max-width: 600px;
-      margin: auto;
-      padding: 20px;
-    }
-
-    #chat {
-      height: 250px;
-      overflow-y: auto;
-      border: 1px solid black;
-      padding: 10px;
-      margin: 10px 0;
-      background: #f5f5f5;
-    }
-
-    input {
-      padding: 6px;
-      margin: 5px 0;
-      width: 70%;
-    }
-
-    button {
-      padding: 6px 10px;
-    }
+    body { font-family: Arial; max-width: 600px; margin: auto; padding: 20px; }
+    input, button { padding: 6px; margin: 5px 0; width: 70%; }
+    #log { height: 200px; overflow-y: auto; border: 1px solid black; padding: 10px; background: #f5f5f5; }
   </style>
 </head>
-
 <body>
 
-<h2>PeerJS Chat (Cloudflare TURN)</h2>
+<h2>PeerJS Voice Chat (Cloudflare TURN)</h2>
 
 <b>Your Peer ID:</b>
 <div id="myId">Connecting...</div>
 
-<hr>
-
 <input id="peerIdInput" placeholder="Friend Peer ID">
-<button onclick="connectPeer()">Connect</button>
+<button onclick="callPeer()">Call</button>
 
-<div id="chat"></div>
+<div id="log"></div>
 
-<input id="msg" placeholder="Message">
-<button onclick="sendMsg()">Send</button>
+<h3>Local & Remote Audio</h3>
+<audio id="localAudio" autoplay muted></audio>
+<audio id="remoteAudio" autoplay></audio>
 
 <script>
-let conn;
+let peer, localStream, currentCall;
 
-function log(text, isError=false) {
-  console[isError ? "error" : "log"](text);
-
-  const chat = document.getElementById("chat");
-  chat.innerHTML += (isError ? "❌ " : "ℹ️ ") + text + "<br>";
-  chat.scrollTop = chat.scrollHeight;
+// log helper
+function log(msg, error=false) {
+  console[error ? "error":"log"](msg);
+  const l = document.getElementById("log");
+  l.innerHTML += (error ? "❌ ":"ℹ️ ") + msg + "<br>";
+  l.scrollTop = l.scrollHeight;
 }
 
+// ============================
+// Cloudflare STUN + TURN
+// ============================
+const iceConfig = {
+  iceServers: [
+    { urls: "stun:stun.cloudflare.com:3478" },
+    {
+      urls: [
+        "turn:turn.cloudflare.com:3478?transport=udp",
+        "turn:turn.cloudflare.com:3478?transport=tcp",
+        "turns:turn.cloudflare.com:5349?transport=tcp"
+      ],
+      username: "g05afd4e013e8557463bea3d4d41470d0adc5fe8c78aa095892fe975ac780b4e",
+      credential: "c518271ff742c00025391b37255ec325d0483fefa54ee0ecb71fafc7d8dccdb3"
+    }
+  ]
+};
 
 // ============================
-// CLOUDFlARE STUN + TURN
+// Initialize PeerJS
 // ============================
-
-const peer = new Peer({
-  debug: 3,
-  config: {
-    iceTransportPolicy: "all",
-    iceServers: [
-      {
-        urls: [
-          "stun:stun.cloudflare.com:3478",
-
-          "turn:turn.cloudflare.com:3478?transport=udp",
-          "turn:turn.cloudflare.com:3478?transport=tcp",
-          "turns:turn.cloudflare.com:5349?transport=tcp"
-        ],
-        username:
-          "g05afd4e013e8557463bea3d4d41470d0adc5fe8c78aa095892fe975ac780b4e",
-
-        credential:
-          "c518271ff742c00025391b37255ec325d0483fefa54ee0ecb71fafc7d8dccdb3"
-      }
-    ]
-  }
-});
-
-
-// ============================
-// PEER EVENTS
-// ============================
+peer = new Peer({ debug: 3, config: iceConfig });
 
 peer.on("open", id => {
   document.getElementById("myId").innerText = id;
   log("Connected to PeerJS server. ID: " + id);
 });
 
-peer.on("error", err => {
-  log("Peer error: " + err.type + " → " + err.message, true);
-});
-
-peer.on("disconnected", () => {
-  log("Disconnected from signaling server", true);
-});
-
-peer.on("close", () => {
-  log("Peer destroyed", true);
-});
-
-
-// Incoming connection
-peer.on("connection", connection => {
-  log("Incoming connection...");
-  setupConnection(connection);
-});
-
+peer.on("error", err => log("Peer error: " + err.type + " → " + err.message, true));
+peer.on("disconnected", () => log("Disconnected from PeerJS server", true));
 
 // ============================
-// CONNECT TO PEER
+// Get microphone access
 // ============================
+navigator.mediaDevices.getUserMedia({ audio: true })
+  .then(stream => {
+    localStream = stream;
+    document.getElementById("localAudio").srcObject = stream;
+    log("Local microphone ready");
+  })
+  .catch(err => log("Microphone access denied: " + err, true));
 
-function connectPeer() {
+// ============================
+// Handle incoming calls
+// ============================
+peer.on("call", call => {
+  log("Incoming call from: " + call.peer);
+
+  call.answer(localStream); // send local audio
+  setupCallEvents(call);
+});
+
+// ============================
+// Call a peer
+// ============================
+function callPeer() {
   const id = document.getElementById("peerIdInput").value;
+  if (!id) { log("Enter peer ID", true); return; }
+  if (!localStream) { log("Microphone not ready", true); return; }
 
-  if (!id) {
-    log("Enter peer ID first", true);
-    return;
-  }
-
-  log("Trying to connect to " + id);
-
-  const connection = peer.connect(id, {
-    reliable: true,
-    serialization: "json"
-  });
-
-  setupConnection(connection);
+  log("Calling " + id + "...");
+  const call = peer.call(id, localStream);
+  setupCallEvents(call);
 }
 
-
 // ============================
-// CONNECTION HANDLER
+// Call event handlers
 // ============================
+function setupCallEvents(call) {
+  currentCall = call;
 
-function setupConnection(connection) {
-  conn = connection;
-
-  conn.on("open", () => {
-    log("✅ Data channel opened");
+  call.on("stream", remoteStream => {
+    document.getElementById("remoteAudio").srcObject = remoteStream;
+    log("Connected! Receiving remote audio");
   });
 
-  conn.on("data", data => {
-    log("Friend: " + data);
-  });
+  call.on("close", () => log("Call ended", true));
+  call.on("error", err => log("Call error: " + err, true));
 
-  conn.on("close", () => {
-    log("Connection closed", true);
-  });
-
-  conn.on("error", err => {
-    log("Connection error: " + err, true);
-  });
-
-  // timeout check
+  // ICE timeout (optional)
   setTimeout(() => {
-    if (!conn.open) {
-      log("Connection timeout (ICE failed)", true);
+    if (call.iceConnectionState !== "connected") {
+      log("Connection timeout or ICE failed", true);
     }
   }, 10000);
 }
 
-
-// ============================
-// SEND MESSAGE
-// ============================
-
-function sendMsg() {
-  const input = document.getElementById("msg");
-
-  if (!conn || !conn.open) {
-    log("Cannot send: not connected", true);
-    return;
-  }
-
-  conn.send(input.value);
-  log("You: " + input.value);
-
-  input.value = "";
-}
 </script>
-
 </body>
 </html>
