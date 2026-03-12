@@ -1,97 +1,102 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Socket.IO Voice Chat</title>
+  <title>PeerJS Chat</title>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
+
 <body>
-<h2>Voice Chat (Socket.IO Only)</h2>
-<button onclick="joinRoom()">Join Room</button>
-<button onclick="startVoice()">Start Voice</button>
 
-<script src="/socket.io/socket.io.js"></script>
+<h2>PeerJS Chat App</h2>
+
+<b>Your Peer ID:</b>
+<div id="myId">Connecting...</div>
+
+<hr>
+
+<input id="peerIdInput" placeholder="Friend Peer ID">
+<button onclick="connectPeer()">Connect</button>
+
+<hr>
+
+<div id="chat"
+     style="height:200px;overflow:auto;border:1px solid black;padding:5px;">
+</div>
+
+<input id="msg" placeholder="Message">
+<button onclick="sendMsg()">Send</button>
+
 <script>
-const socket = io("https://83412e4d-a2ae-4107-b617-27da4c50a88f-00-2ldatesd4w0e8.sisko.replit.dev/");
+let conn;
 
-let audioContext;
-let processor;
-let input;
-let stream;
-let room = "room1";
-
-// Join room
-function joinRoom() {
-    socket.emit("join-room", room);
-    console.log("Joined room:", room);
-}
-
-// Start capturing microphone
-async function startVoice() {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    input = audioContext.createMediaStreamSource(stream);
-
-    processor = audioContext.createScriptProcessor(2048, 1, 1);
-    input.connect(processor);
-    processor.connect(audioContext.destination);
-
-    processor.onaudioprocess = e => {
-        const data = e.inputBuffer.getChannelData(0);
-        const buffer = floatTo16BitPCM(data);
-        const base64 = arrayBufferToBase64(buffer);
-        socket.emit("voice", { room, audioChunk: base64 });
-    };
-}
-
-// Convert float audio to 16-bit PCM
-function floatTo16BitPCM(float32Array) {
-    const buffer = new ArrayBuffer(float32Array.length * 2);
-    const view = new DataView(buffer);
-    let offset = 0;
-    for (let i = 0; i < float32Array.length; i++, offset += 2) {
-        let s = Math.max(-1, Math.min(1, float32Array[i]));
-        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-    }
-    return buffer;
-}
-
-// Convert ArrayBuffer to Base64
-function arrayBufferToBase64(buffer) {
-    let binary = '';
-    const bytes = new Uint8Array(buffer);
-    for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
-}
-
-// Convert Base64 to Float32
-function base64ToFloat32(base64) {
-    const binary = atob(base64);
-    const buffer = new ArrayBuffer(binary.length);
-    const view = new DataView(buffer);
-    for (let i = 0; i < binary.length; i++) {
-        view.setUint8(i, binary.charCodeAt(i));
-    }
-
-    const float32 = new Float32Array(buffer.byteLength / 2);
-    const dv = new DataView(buffer);
-    for (let i = 0; i < float32.length; i++) {
-        float32[i] = dv.getInt16(i*2, true) / 0x7fff;
-    }
-    return float32;
-}
-
-// Play received audio
-socket.on("voice", base64 => {
-    const float32 = base64ToFloat32(base64);
-    const buffer = audioContext.createBuffer(1, float32.length, audioContext.sampleRate);
-    buffer.copyToChannel(float32, 0);
-
-    const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audioContext.destination);
-    source.start();
+// ICE servers (STUN + TURN)
+const peer = new Peer({
+  config: {
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      {
+        urls: "turn:openrelay.metered.ca:80",
+        username: "openrelayproject",
+        credential: "openrelayproject"
+      }
+    ]
+  }
 });
+
+// When connected to PeerJS server
+peer.on("open", id => {
+  document.getElementById("myId").innerText = id;
+});
+
+// Incoming connection
+peer.on("connection", connection => {
+  setupConnection(connection);
+});
+
+function connectPeer() {
+  const id = document.getElementById("peerIdInput").value;
+  const connection = peer.connect(id);
+  setupConnection(connection);
+}
+
+function setupConnection(connection) {
+  conn = connection;
+
+  conn.on("open", () => {
+    addChat("✅ Connected!");
+  });
+
+  conn.on("data", data => {
+    addChat("Friend: " + data);
+  });
+
+  conn.on("close", () => {
+    addChat("❌ Disconnected");
+  });
+}
+
+function sendMsg() {
+  const input = document.getElementById("msg");
+  const message = input.value;
+
+  if (!conn || !conn.open) {
+    alert("Not connected!");
+    return;
+  }
+
+  conn.send(message);
+  addChat("You: " + message);
+
+  input.value = "";
+}
+
+function addChat(text) {
+  const chat = document.getElementById("chat");
+  chat.innerHTML += text + "<br>";
+  chat.scrollTop = chat.scrollHeight;
+}
 </script>
+
 </body>
 </html>
