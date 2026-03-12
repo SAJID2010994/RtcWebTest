@@ -1,13 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>PeerJS Chat</title>
+  <meta charset="UTF-8">
+  <title>PeerJS Chat (Cloudflare TURN)</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    #chat {
+      height: 250px;
+      overflow-y: auto;
+      border: 1px solid black;
+      padding: 10px;
+      margin: 10px 0;
+      background: #f5f5f5;
+    }
+
+    input {
+      padding: 6px;
+      margin: 5px 0;
+      width: 70%;
+    }
+
+    button {
+      padding: 6px 10px;
+    }
+  </style>
 </head>
 
 <body>
 
-<h2>PeerJS Chat App</h2>
+<h2>PeerJS Chat (Cloudflare TURN)</h2>
 
 <b>Your Peer ID:</b>
 <div id="myId">Connecting...</div>
@@ -17,11 +46,7 @@
 <input id="peerIdInput" placeholder="Friend Peer ID">
 <button onclick="connectPeer()">Connect</button>
 
-<hr>
-
-<div id="chat"
-     style="height:200px;overflow:auto;border:1px solid black;padding:5px;">
-</div>
+<div id="chat"></div>
 
 <input id="msg" placeholder="Message">
 <button onclick="sendMsg()">Send</button>
@@ -29,72 +54,143 @@
 <script>
 let conn;
 
-// ICE servers (STUN + TURN)
+function log(text, isError=false) {
+  console[isError ? "error" : "log"](text);
+
+  const chat = document.getElementById("chat");
+  chat.innerHTML += (isError ? "❌ " : "ℹ️ ") + text + "<br>";
+  chat.scrollTop = chat.scrollHeight;
+}
+
+
+// ============================
+// CLOUDFlARE STUN + TURN
+// ============================
+
 const peer = new Peer({
+  debug: 3,
   config: {
+    iceTransportPolicy: "all",
     iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" },
       {
-        urls: "turn:openrelay.metered.ca:80",
-        username: "openrelayproject",
-        credential: "openrelayproject"
+        urls: [
+          "stun:stun.cloudflare.com:3478",
+
+          "turn:turn.cloudflare.com:3478?transport=udp",
+          "turn:turn.cloudflare.com:3478?transport=tcp",
+          "turns:turn.cloudflare.com:5349?transport=tcp"
+        ],
+        username:
+          "g05afd4e013e8557463bea3d4d41470d0adc5fe8c78aa095892fe975ac780b4e",
+
+        credential:
+          "c518271ff742c00025391b37255ec325d0483fefa54ee0ecb71fafc7d8dccdb3"
       }
     ]
   }
 });
 
-// When connected to PeerJS server
+
+// ============================
+// PEER EVENTS
+// ============================
+
 peer.on("open", id => {
   document.getElementById("myId").innerText = id;
+  log("Connected to PeerJS server. ID: " + id);
 });
+
+peer.on("error", err => {
+  log("Peer error: " + err.type + " → " + err.message, true);
+});
+
+peer.on("disconnected", () => {
+  log("Disconnected from signaling server", true);
+});
+
+peer.on("close", () => {
+  log("Peer destroyed", true);
+});
+
 
 // Incoming connection
 peer.on("connection", connection => {
+  log("Incoming connection...");
   setupConnection(connection);
 });
 
+
+// ============================
+// CONNECT TO PEER
+// ============================
+
 function connectPeer() {
   const id = document.getElementById("peerIdInput").value;
-  const connection = peer.connect(id);
+
+  if (!id) {
+    log("Enter peer ID first", true);
+    return;
+  }
+
+  log("Trying to connect to " + id);
+
+  const connection = peer.connect(id, {
+    reliable: true,
+    serialization: "json"
+  });
+
   setupConnection(connection);
 }
+
+
+// ============================
+// CONNECTION HANDLER
+// ============================
 
 function setupConnection(connection) {
   conn = connection;
 
   conn.on("open", () => {
-    addChat("✅ Connected!");
+    log("✅ Data channel opened");
   });
 
   conn.on("data", data => {
-    addChat("Friend: " + data);
+    log("Friend: " + data);
   });
 
   conn.on("close", () => {
-    addChat("❌ Disconnected");
+    log("Connection closed", true);
   });
+
+  conn.on("error", err => {
+    log("Connection error: " + err, true);
+  });
+
+  // timeout check
+  setTimeout(() => {
+    if (!conn.open) {
+      log("Connection timeout (ICE failed)", true);
+    }
+  }, 10000);
 }
+
+
+// ============================
+// SEND MESSAGE
+// ============================
 
 function sendMsg() {
   const input = document.getElementById("msg");
-  const message = input.value;
 
   if (!conn || !conn.open) {
-    alert("Not connected!");
+    log("Cannot send: not connected", true);
     return;
   }
 
-  conn.send(message);
-  addChat("You: " + message);
+  conn.send(input.value);
+  log("You: " + input.value);
 
   input.value = "";
-}
-
-function addChat(text) {
-  const chat = document.getElementById("chat");
-  chat.innerHTML += text + "<br>";
-  chat.scrollTop = chat.scrollHeight;
 }
 </script>
 
