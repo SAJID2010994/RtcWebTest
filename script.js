@@ -21,17 +21,20 @@ let iceConfig = {
 let velocity={x:0,y:0}
 let connection
 let hostId
-let peer=new Peer({config:iceConfig})
+let peer=new Peer({debug:3,config:iceConfig})
 let host=prompt('wanna be the host?')
 if (host !='yes') {
-	hostId=prompt('Enter host id:')
-	connection=peer.connect(hostId)
-	 	connection.on('open', () => {
- 		addChild(hostId)
- 		connection.on('data', data => {
- 			UpdatePlayer(conn.peer, data)
- 		})
- 	})
+	document.querySelector('button').onclick=()=>{
+		hostId=document.querySelector('#hostId').value
+		connection = peer.connect(hostId)
+connection.on('open', () => {
+	addPlayer(hostId)
+	connection.on('data', data => {
+		UpdatePlayer(1, data)
+	})
+})
+	}
+	
 }
 function addPlayer(id) {
 	playerHashMap[name]=playerSprites.length
@@ -40,12 +43,12 @@ function addPlayer(id) {
 	app.stage.addChild(sprite)
 	
 }
-function UpdatePlayer(id,pos) {
-	playerSprites[playerHashMap[id]].x=pos.x
-	playerSprites[playerHashMap[id]].y=pos.y
+function UpdatePlayer(no,pos) {
+	playerSprites[no].x=pos.x
+	playerSprites[no].y=pos.y
 }
 let joystick=nipplejs.create({
-	
+	zone:document.querySelector('.a'),
 	mode: 'static',
 	position: { left: '100px', bottom: "100px" },
 	color: 'white',
@@ -70,16 +73,18 @@ document.body.appendChild(app.view)
  peer.on('open',e=>{
  	myid=e
  	if (host=='yes') {
- 		alert(e)
+ 		document.querySelector('label').innerText+=e
  	}
  	addPlayer(e)
  })
 peer.on('connection',conn=>{
- 	peer.on('open',()=>{
+
+ 	conn.on('open',()=>{
+ 		alert(conn.peer)
  		connection=conn
- 		addChild(conn.peer)
- 		peer.on('data',data=>{
- 			UpdatePlayer(conn.peer,data)
+ 		addPlayer(conn.peer)
+ 		conn.on('data',data=>{
+ 			UpdatePlayer(1,data)
  		})
  	})
  })
