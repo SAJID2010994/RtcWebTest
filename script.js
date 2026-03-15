@@ -1,4 +1,10 @@
-const iceConfig = {
+let app
+let texture
+let myid
+let move
+let playerHashMap={}
+let playerSprites=[]
+let iceConfig = {
 	iceServers: [
 		{ urls: "stun:stun.cloudflare.com:3478" },
 		{
@@ -11,60 +17,79 @@ const iceConfig = {
 			credential: "c518271ff742c00025391b37255ec325d0483fefa54ee0ecb71fafc7d8dccdb3"
 		}
 	]
-};
-let name=prompt('Enter you name!!')
-let host=prompt('Do u wanna be the host??')
-let peer=new Peer({debug:3,config:iceConfig})
-let connections={}
-let sendBtn=document.querySelector('#button')
-let msgBox=document.querySelector('#msg')
-
-peer.on('open',id=>{
-	document.getElementById('id').innerText+=id
-})
-function broadCast(senderId,msg) {
-	Object.keys(connections).forEach(e=>{
-		if(e!=senderId){
-			connections[e].send(msg)
-		}
-	})
 }
-function display(from,msg) {
-	document.querySelector('.remoteMsg').innerHTML+=`<label>${from}:${msg}</label>`
+let velocity={x:0,y:0}
+let connection
+let hostId
+let peer=new Peer({config:iceConfig})
+let host=prompt('wanna be the host?')
+if (host !='yes') {
+	hostId=prompt('Enter host id:')
+	connection=peer.connect(hostId)
+	 	connection.on('open', () => {
+ 		addChild(hostId)
+ 		connection.on('data', data => {
+ 			UpdatePlayer(conn.peer, data)
+ 		})
+ 	})
 }
-if (host =='true') {
-	peer.on('connection',conn=>{
-		conn.on('open',()=>{
-			alert('connection opened')
-			connections[conn.peer]=conn
-			sendBtn.onclick = () => {
-				display('You',msgBox.value)
-	broadCast('',{from:name,msg:msgBox.value})
-	msgBox.value = null
-}
-			conn.on('data',data=>{
-				display(data.from,data.msg)
-				broadCast(conn.peer,data)
-			})
-		})
-	})
-}else{
-	
-	document.querySelector('.nonHost').removeAttribute('hidden')
-	document.querySelector('.nonHost button').onclick=()=>{
-		let conn = peer.connect(document.querySelector('.nonHost input').value)
-conn.on('open', () => {
-	alert('connection opened')
-	sendBtn.onclick = () => {
-		display('You', msgBox.value)
-		conn.send({ from: name, msg: msgBox.value })
-		msgBox.value = null
-	}
-	conn.on('data', data => {
-		display(data.from, data.msg)
-	})
-})
-	}
+function addPlayer(id) {
+	playerHashMap[name]=playerSprites.length
+	let sprite=new PIXI.Sprite(texture)
+	playerSprites.push(sprite)
+	app.stage.addChild(sprite)
 	
 }
-
+function UpdatePlayer(id,pos) {
+	playerSprites[playerHashMap[id]].x=pos.x
+	playerSprites[playerHashMap[id]].y=pos.y
+}
+let joystick=nipplejs.create({
+	
+	mode: 'static',
+	position: { left: '100px', bottom: "100px" },
+	color: 'white',
+	size: 120,
+	className: 'abc',
+	restOpacity: 1,
+});
+let speed=3;
+joystick.on('move',(evt,data)=>{
+	move=true
+	velocity.x=data.vector.x*speed
+	velocity.y=data.vector.y*speed
+})
+joystick.on('end',e=>{
+	move=false
+});
+(async () =>{
+ app = new PIXI.Application()
+await app.init({ resizeTo: window, autoDensity: true, resolution: window.devicePixelRatio || 1 })
+document.body.appendChild(app.view)
+ texture=await PIXI.Assets.load('rect.png')
+ peer.on('open',e=>{
+ 	myid=e
+ 	if (host=='yes') {
+ 		alert(e)
+ 	}
+ 	addPlayer(e)
+ })
+peer.on('connection',conn=>{
+ 	peer.on('open',()=>{
+ 		connection=conn
+ 		addChild(conn.peer)
+ 		peer.on('data',data=>{
+ 			UpdatePlayer(conn.peer,data)
+ 		})
+ 	})
+ })
+ app.ticker.add(()=>{
+ 	if (move==true) {
+ 	playerSprites[0].x+=velocity.x
+ 	playerSprites[0].y-=velocity.y
+ 	if (connection) {
+connection.send({x:playerSprites[0].x,y:playerSprites[0].y})
+ 	}
+ 	}
+ })
+})()
