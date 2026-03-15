@@ -21,7 +21,10 @@ let iceConfig = {
 }
 let velocity={x:0,y:0}
 let connection
-let localStream=navigator.mediaDevices.getUserMedia({audio:true})
+let localStream
+navigator.mediaDevices.getUserMedia({audio:true}).then(ztream=>{
+	localStream=ztream
+})
 let call
 let hostId
 let peer=new Peer({debug:3,config:iceConfig})
@@ -29,8 +32,9 @@ let host=prompt('wanna be the host?')
 if (host !='yes') {
 	document.querySelector('button').onclick=()=>{
 		hostId=document.querySelector('#hostId').value
-		call=peer.call(hostId,localStream)
-		call.on('stream',remStream=>{
+		
+		call = peer.call(hostId, localStream)
+call.on('stream',remStream=>{
 			audioElement.srcObject = remStream
 let audioCtx = new AudioContext()
 let source = audioCtx.createMediaElementSource(audioElement)
