@@ -36,11 +36,7 @@ if (host !='yes') {
 		call = peer.call(hostId, localStream)
 call.on('stream',remStream=>{
 			audioElement.srcObject = remStream
-let audioCtx = new AudioContext()
-let source = audioCtx.createMediaElementSource(audioElement)
-let gain = audioCtx.createGain()
-source.connect(gain)
-gain.connect(audioCtx.destination)
+			
 		})
 		connection = peer.connect(hostId)
 connection.on('open', () => {
@@ -58,6 +54,16 @@ function addPlayer(id) {
 	playerSprites.push(sprite)
 	app.stage.addChild(sprite)
 	
+}
+function findDistance(pos1,pos2) {
+	return Math.sqrt(Math.pow(pos1.x-pos2.x,2)+Math.pow(pos1.y-pos2.y,2))
+}
+function getAudioVolume(distance) {
+	if ((distance/64)<=1) {
+		return 1;
+	} else {
+		return 1/(Math.pow(distance/64))
+	}
 }
 function UpdatePlayer(no,pos) {
 	playerSprites[no].x=pos.x
@@ -108,11 +114,7 @@ peer.on('connection',conn=>{
  	call.answer(localStream)
  	call.on('stream',remStream=>{
  		audioElement.srcObject = remStream
-let audioCtx = new AudioContext()
-let source = audioCtx.createMediaElementSource(audioElement)
-let gain = audioCtx.createGain()
-source.connect(gain)
-gain.connect(audioCtx.destination)
+
  	})
  })
  app.ticker.add(()=>{
@@ -120,6 +122,7 @@ gain.connect(audioCtx.destination)
  	playerSprites[0].x+=velocity.x
  	playerSprites[0].y-=velocity.y
  	if (connection) {
+ 		audioElement.volume=getAudioVolume(findDistance({x:playerSprites[0].x,y:playerSprites[0].y},{x:playerSprites[1].x,y:playerSprites[1].y}))
 connection.send({x:playerSprites[0].x,y:playerSprites[0].y})
  	}
  	}
