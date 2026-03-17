@@ -62,7 +62,7 @@ function getAudioVolume(distance) {
 	if ((distance/64)<=1) {
 		return 1;
 	} else {
-		return 1/(Math.pow(distance/64))
+		return 1/(Math.pow(distance/64,2))
 	}
 }
 function UpdatePlayer(no,pos) {
