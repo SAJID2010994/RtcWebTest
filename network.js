@@ -3,8 +3,26 @@ let hostId
 let myId
 let peer
 //config for the peer
-let config={
-	"urls":["stun:stun.cloudflare.com:3478","turn:turn.cloudflare.com:3478?transport=udp","turn:turn.cloudflare.com:3478?transport=tcp","turns:turn.cloudflare.com:5349?transport=tcp"],"username":"g05afd4e013e8557463bea3d4d41470d0adc5fe8c78aa095892fe975ac780b4e","credential":"c518271ff742c00025391b37255ec325d0483fefa54ee0ecb71fafc7d8dccdb3"}
+let config={config:{
+	iceServers: [
+		{ urls: "stun:stun.cloudflare.com:3478" },
+		{
+			urls: "turn:turn.cloudflare.com:3478?transport=udp",
+			username: "g05afd4e013e8557463bea3d4d41470d0adc5fe8c78aa095892fe975ac780b4e",
+			credential: "c518271ff742c00025391b37255ec325d0483fefa54ee0ecb71fafc7d8dccdb3"
+		},
+		{
+			urls: "turn:turn.cloudflare.com:3478?transport=tcp",
+			username: "g05afd4e013e8557463bea3d4d41470d0adc5fe8c78aa095892fe975ac780b4e",
+			credential: "c518271ff742c00025391b37255ec325d0483fefa54ee0ecb71fafc7d8dccdb3"
+		},
+		{
+			urls: "turns:turn.cloudflare.com:5349?transport=tcp",
+			username: "g05afd4e013e8557463bea3d4d41470d0adc5fe8c78aa095892fe975ac780b4e",
+			credential: "c518271ff742c00025391b37255ec325d0483fefa54ee0ecb71fafc7d8dccdb3"
+		}
+	]
+}}
 	
 //dom elements
 let hostIdTextBox=document.getElementById('hostId')
@@ -33,19 +51,22 @@ function analyzeData(data) {
 //And this function also starts the game
 function CallWhenConnectionOpenes(conn) {
 		//starts the game
-			startGame()
-			
-			//this loop will continiously send our states to the other player
+			startGame().then(()=>{
+//this loop will continiously send our states to the other player
 			setInterval(()=>{
 				sendState(conn)
 			},33)
 			
-			//this callback gets called when our peer receives data from the other peer
+//this callback gets called when our peer receives data from the other peer
 			conn.on('data',data=>{
 				analyzeData(data)
 			})
 			
 			
+			
+			})
+			
+
 			
 }
 
@@ -55,7 +76,7 @@ function join(hostId) {
 	hostId=hostId
 	amItheHost=false
 	//creates a new peer
-	peer=new Peer(undefined,config)
+	peer=new Peer(config)
 	console.log(hostId)
 	//callback when the peer id received
 	peer.on('open',id=>{
@@ -77,7 +98,7 @@ function join(hostId) {
 function host() {
 	amItheHost=true
 	
-	peer=new Peer(undefined,config)
+	peer=new Peer(config)
 	
 	peer.on('open',id=>{
 		myId=id
