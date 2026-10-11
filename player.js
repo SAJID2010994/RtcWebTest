@@ -129,7 +129,7 @@ this.flip_h('right')
 	set x(val){
 		this.sprite.x=val
 	}
-	get y(){
+	get x(){
 		return this.sprite.x
 	}
 	set y(val){
