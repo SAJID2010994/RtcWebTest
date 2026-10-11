@@ -5,17 +5,42 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title></title>
-	<script src="pixi.min.js">pixi.min.js</script>
-	<script src="nipple.js">nipple.js</script>
-	<script src="peerjs.min.js">peerjs.min.js</script>
-	<script src="script.js" defer>script.js</script>
+	<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<label for=""></label>
-<div class="a">
-  
-</div>
-<audio id="audio" autoplay></audio>
-<input type="text" id="hostId"><button>Connect</button>
+		<div class="ui-2 hidden">
+	  
+	</div>
+	<div class="ui-1">
+	  <div class="showcase">
+	    
+	  </div>
+	  <div class="buttons">
+	    <button id="host" onclick="host()">Host</button>
+	    <input type="text" id="hostId" placeholder="Enter host Id....." />
+	    <button id="join" onclick="join(document.getElementById('hostId').value)">Join</button>
+	  </div>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<!--        SCRIPTS         -->
+		<script src="/external/nipple.js">nipple.js</script>
+	<script src="/external/pixi.min.js">pix</script>
+	<script src="/external/peerjs.min.js"></script>
+	<script src="randomFunctions.js"></script>
+	<script src="network.js">network.js</script>
+	<script src="control.js">control.js</script>
+	<script src="player.js">player.js</script>
+	<script src="main.js" defer>main.js</script>
 </body>
+
 </html>

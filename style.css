@@ -1,0 +1,46 @@
+	  *{
+	    margin: 0px;
+	    padding: 0px;
+	  }
+	  html,body{
+	    overflow: hidden;
+	  }
+	
+	  .ui-2{
+	    width: 100vw;
+	    height: 100vh;
+	  }
+	  canvas{
+	    z-index:1;
+	  }
+	  .nipple{
+	    z-index:10;
+	  }
+	  .hidden{
+	    display:none;
+	  }
+.ui-1{
+  display: flex;
+  width: 100vw;
+  height:100vh;
+  background: gray;
+}
+.buttons{
+  width:50%;
+  height: 100vh;
+  background: red;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+.showcase{
+  width:50%;
+  height: 100vh;
+  background: green;
+}
+#host{
+  height:100px;
+}
+#join{
+  height: 100px;
+}
