@@ -17,7 +17,7 @@
 	    z-index:10;
 	  }
 	  .hidden{
-	    display:none;
+	    visibility: hidden;
 	  }
 .ui-1{
   display: flex;

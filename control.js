@@ -1,5 +1,5 @@
 let joystick = nipplejs.create({
-	zone: document.querySelector('.ui-2'),
+	zone: document.querySelector('.zone'),
 	mode: 'static',
 	position: { left: '100px', bottom: "100px" },
 	color: 'black',

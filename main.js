@@ -6,8 +6,8 @@ let world
 
 let startGame=async ()=>{
 	//adding class "hidden" to ui-1 and removing it from ui-2
-	document.querySelector('.ui-2').setAttribute('class', 'ui-2')
-document.querySelector('.ui-1').classList[1] = 'hidden'
+	document.querySelector('.ui-2').removeAttribute('hidden')
+document.querySelector('.ui-1').setAttribute('hidden','')
 	
 	
 	
@@ -37,7 +37,13 @@ enemyPlayer=new Player(world,anims,app)
 
 floor=new PIXI.Sprite(floorImg)
 world.addChild(floor)
-floor.y=window.innerHeight
+floor.y=720
+
+app.ticker.add(() => {
+	world.x = -player.x+window.innerWidth/2
+	world.y = -player.y+window.innerHeight/2
+})
+
 /*window.onclick=()=>{
 	if (player.state=='run-right') {
 		player.run('left')
@@ -46,3 +52,4 @@ floor.y=window.innerHeight
 	}
 }*/
 }
+startGame()
