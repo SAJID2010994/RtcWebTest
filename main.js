@@ -3,35 +3,20 @@ let enemyPlayer
 let floor
 let app
 let world
-
+let shakeOffset={x:0,y:0}
 let startGame=async ()=>{
 	//adding class "hidden" to ui-1 and removing it from ui-2
 	document.querySelector('.ui-2').removeAttribute('hidden')
 document.querySelector('.ui-1').setAttribute('hidden','')
 	
-	let joystick = nipplejs.create({
-	zone: document.querySelector('.zone'),
-	mode: 'static',
-	position: { left: '100px', bottom: "100px" },
-	color: 'black',
-	size: 120,
-	className: 'abc',
-	restOpacity: 1,
-});
-joystick.on('move', (evt, data) => {
-	try {
-		
-		player.run(data.direction.angle)
-	} catch (e) {}
-})
-joystick.on('end', e => {
-	player.idle()
-});
+	
+	createJoystick()
+	
 	
 	
 	//setting things up
 	app = new PIXI.Application()
-await app.init({ resizeTo: window, autoDensity: true, resolution: window.devicePixelRatio || 1 ,backgroundColor:0xffffff})
+await app.init({ resizeTo: window, autoDensity: true, resolution: window.devicePixelRatio || 1 ,backgroundColor:0x135B66})
 PIXI.TextureStyle.defaultOptions.scaleMode = 'nearest'
 document.querySelector('.ui-2').appendChild(app.canvas);
 
@@ -43,7 +28,7 @@ app.stage.addChild(world)
 //loading texture and jsons
 let anims=await PIXI.Assets.load('player.json')
 let floorImg=await PIXI.Assets.load('floor.png')
-
+let lightPng=await PIXI.Assets.load('light.png')
 
 //creating the main player
 player=new Player(world,anims,app)
@@ -55,17 +40,14 @@ enemyPlayer=new Player(world,anims,app)
 floor=new PIXI.Sprite(floorImg)
 world.addChild(floor)
 floor.y=720
-
+//CameraShake(5,10,5000)
 app.ticker.add(() => {
-	world.x = -player.x+window.innerWidth/2
-	world.y = -player.y+window.innerHeight/2
+	world.x = (-player.x+window.innerWidth/2)+shakeOffset.x
+	world.y = (-player.y+window.innerHeight/2)-shakeOffset.y
 })
 
-/*window.onclick=()=>{
-	if (player.state=='run-right') {
-		player.run('left')
-	}else if(player.state=='run-left'){
-		player.run('right')
-	}
-}*/
+window.ondblclick=()=>{
+	player.state='hit1'
+}
+
 }

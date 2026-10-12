@@ -36,14 +36,17 @@ function sendState(conn) {
 		x:player.x,
 		y:player.y,
 		state:player.state,
+		direction:player.direction
 	})
 }
 
 //this function will do the stuffs after reciving the data from the other player
 function analyzeData(data) {
 	enemyPlayer.state=data.state
+	enemyPlayer.direction=data.direction
 	enemyPlayer.x=data.x
 	enemyPlayer.y=data.y
+	
 }
 
 

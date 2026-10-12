@@ -20,12 +20,17 @@ class Player{
 	//initialzing currentAnimation
 	this.sprite.currentAnimation='run_left'
 	
-	//initializing state
-	this.state='idle_right'
+	//initializing state and direction
+	this.state='idle'
+	
+	this.direction='right'
 	
 	//gravity related stuff
 	this.gravity=0
 	
+	//
+	this.x=0
+	this.y=0
 	
 	//setting animation speed
 	this.sprite.animationSpeed = 0.25
@@ -41,50 +46,53 @@ class Player{
 	//loop for the player
 	app.ticker.add((ticker)=>{
 		 sec = ticker.deltaMS / 1000;
+		 
+		 //flips the player according to the direction
+		 this.flip_h(this.direction)
+		 
+		 
 		 //checks is the currentAnimation is similar to the current state
 		if (this.sprite.currentAnimation!=this.state) {
 			//sets the currentAnimatiom var to the state value
 			this.sprite.currentAnimation=this.state
 			
 			//sets the state animation to the sprite
-			this.sprite.textures=this.anims.animations[this.state.split('_')[0]]
+			this.sprite.textures=this.anims.animations[this.state]
 			
 			//plays the animation
 			this.sprite.play()
-			//this switch statement flips the sprite according to the direction and sets the speed and looping
+			//this switch statement sets the speed and looping
 			switch (this.state) {
-	case 'run_right':
+	case 'run':
 		this.sprite.animationSpeed = 0.25
 		this.sprite.loop=true
-		this.flip_h('right')
 		break;
-	case 'run_left':
+	case 'idle':
+		this.sprite.animationSpeed = 0.125
 		this.sprite.loop=true
-		this.sprite.animationSpeed = 0.25
-		this.flip_h('left')
 		break;
-	case 'idle_left':
-		this.sprite.animationSpeed = 0.125
-		this.flip_h('left')
+	case 'hit1':
+		this.sprite.animationSpeed = 0.6
+this.sprite.loop = false
 		break;
-	case 'idle_right':
-		this.sprite.animationSpeed = 0.125
-this.flip_h('right')
-		break;
-	
 	
 }
 		}
 		//checks if the player is touching the floor or not
-		if (isColliding({x:this.sprite.x-32*this.sprite.scale.y,y:this.sprite.y-32*this.sprite.scale.y,width:64*this.sprite.scale.y,height:64*this.sprite.scale.y},{x:floor.x,y:floor.y,width:1280,height:50})) {
+		if (isColliding({x:this.x-32*this.sprite.scale.y,y:this.y-32*this.sprite.scale.y,width:64*this.sprite.scale.y,height:64*this.sprite.scale.y},{x:floor.x,y:floor.y,width:1280,height:50})) {
 			this.velocity.y=0
 		}else{
 			//incresing the y velocity according to the gravity
 			this.velocity.y += this.gravity
 		}
+		
+		
 		//moving the player according to the his velocity
-		this.sprite.x+=this.velocity.x*sec
-		this.sprite.y-=this.velocity.y*sec
+		this.x+=this.velocity.x*sec
+		this.y-=this.velocity.y*sec
+		
+		this.sprite.x=lerp(this.sprite.x,this.x,0.4)
+		this.sprite.y=lerp(this.sprite.y,this.y,0.4)
 	})
 	}
 	//flipper function
@@ -105,27 +113,21 @@ this.flip_h('right')
 		switch (direction) {
 			case 'right':
 				this.velocity.x=this.speed
-				this.state='run_right'
+				this.state='run'
+				this.direction=direction
 				break;
 			case 'left':
 				this.velocity.x=-this.speed
-				this.state='run_left'
+				this.state='run'
+				this.direction=direction
 				break;
 		}
 	}
 	idle(){
-		switch (this.state.split('_')[1]) {
-	case 'right':
 		this.velocity.x = 0
-		this.state = 'idle_right'
-		break;
-	case 'left':
-		this.velocity.x = 0
-		this.state = 'idle_left'
-		break;
-}
+this.state = 'idle'
 	}
-	//getters and setters
+	/*getters and setters
 	set x(val){
 		this.sprite.x=val
 	}
@@ -137,5 +139,5 @@ this.flip_h('right')
 	}
 	get y(){
 		return this.sprite.y
-	}
+	}*/
 }

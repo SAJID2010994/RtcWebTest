@@ -6,3 +6,20 @@ function isColliding(obj1, obj2) {
 		return false
 	}
 }
+function lerp(a, b, t) {
+	return a + (b - a) * t;
+}
+function CameraShake(intensity,speed,time){
+	let currentPerformance
+	let test=0
+	let shakeInterval=setInterval(()=>{
+		currentPerformance=performance.now()
+		shakeOffset.x=Math.sin(currentPerformance*40)*intensity
+		shakeOffset.y=Math.cos(currentPerformance*50)*intensity
+	},speed)
+	setTimeout(()=>{
+		console.log('sk')
+		clearInterval(shakeInterval)
+		shakeOffset={x:0,y:0}
+	},time)
+}
