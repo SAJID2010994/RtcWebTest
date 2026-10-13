@@ -35,19 +35,26 @@ player=new Player(world,anims,app)
 player.gravity=-10
 //creating the opponent player
 enemyPlayer=new Player(world,anims,app)
-
+enemyPlayer.y=720-128
 
 floor=new PIXI.Sprite(floorImg)
 world.addChild(floor)
 floor.y=720
+
+
+
+//const debug = new HitboxDebug(app, world, [player, enemyPlayer]);
+
+
 //CameraShake(5,10,5000)
 app.ticker.add(() => {
 	world.x = (-player.x+window.innerWidth/2)+shakeOffset.x
 	world.y = (-player.y+window.innerHeight/2)-shakeOffset.y
 })
 
-window.ondblclick=()=>{
-	player.state='hit1'
+document.querySelector('.nipple').ondblclick=()=>{
+	player.dash()
 }
 
 }
+//startGame()

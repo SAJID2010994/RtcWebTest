@@ -9,7 +9,7 @@ class Player{
 	
 	
 	//setting scale
-	this.sprite.scale=2.5
+	this.sprite.scale=3
 	
 	//setting anchor
 	this.sprite.anchor.set(0.5)
@@ -17,6 +17,13 @@ class Player{
 	//adding to the container
 	container.addChild(this.sprite)
 	
+	//setting up hitbox
+	this.hitBox={
+		x:0,
+		y:32,
+		width:16,
+		height:37
+	}
 	//initialzing currentAnimation
 	this.sprite.currentAnimation='run_left'
 	
@@ -24,6 +31,10 @@ class Player{
 	this.state='idle'
 	
 	this.direction='right'
+	
+	
+	this.health=100
+	
 	
 	//gravity related stuff
 	this.gravity=0
@@ -75,11 +86,15 @@ class Player{
 		this.sprite.animationSpeed = 0.6
 this.sprite.loop = false
 		break;
+		case 'dash':
+			this.sprite.animationSpeed = 0.3
+this.sprite.loop = false
+			break;
 	
 }
 		}
 		//checks if the player is touching the floor or not
-		if (isColliding({x:this.x-32*this.sprite.scale.y,y:this.y-32*this.sprite.scale.y,width:64*this.sprite.scale.y,height:64*this.sprite.scale.y},{x:floor.x,y:floor.y,width:1280,height:50})) {
+		if (this.y+((64*this.sprite.scale.y)/2)>=floor.y) {
 			this.velocity.y=0
 		}else{
 			//incresing the y velocity according to the gravity
@@ -126,6 +141,28 @@ this.sprite.loop = false
 	idle(){
 		this.velocity.x = 0
 this.state = 'idle'
+	}
+	dash(){
+		this.state='dash'
+		this.sprite.onFrameChange=()=>{
+			if (this.state=='dash') {
+				switch (this.direction) {
+	case 'right':
+		this.velocity.x += 2000
+		break;
+	case 'left':
+		this.velocity.x -= 2000
+		break;
+}
+			}
+			
+		}
+		CameraShake(7,16,100)
+		setTimeout(()=>{
+			this.state='idle'
+			this.velocity.x=0
+			this.sprite.onFrameChange = ''
+		},100)
 	}
 	/*getters and setters
 	set x(val){
