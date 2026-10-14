@@ -33,6 +33,7 @@ let conn
 //this function will send the other player our state
 function sendState(conn) {
 	conn.send({
+		type:'state',
 		x:player.x,
 		y:player.y,
 		state:player.state,
@@ -42,11 +43,18 @@ function sendState(conn) {
 
 //this function will do the stuffs after reciving the data from the other player
 function analyzeData(data) {
-	enemyPlayer.state=data.state
+	switch (data.type) {
+		case 'state':
+			enemyPlayer.state=data.state
 	enemyPlayer.direction=data.direction
 	enemyPlayer.x=data.x
 	enemyPlayer.y=data.y
-	
+			break;
+		case 'hit':
+			alert('You got hit!')
+			break;
+		
+	}
 }
 
 

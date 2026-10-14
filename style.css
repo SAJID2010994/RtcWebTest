@@ -45,3 +45,17 @@
 #join{
   height: 100px;
 }
+#dash{
+  position: absolute;
+  image-rendering: crisp-edges;
+  bottom: 130px;
+  right: 60px;
+  scale: 1.5;
+}
+#punch{
+  position: absolute;
+image-rendering: crisp-edges;
+bottom: 30px;
+right: 30px;
+scale: 1.5;
+}

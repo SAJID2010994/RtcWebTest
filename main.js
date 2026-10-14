@@ -40,10 +40,10 @@ enemyPlayer.y=720-128
 floor=new PIXI.Sprite(floorImg)
 world.addChild(floor)
 floor.y=720
+//world.scale=0.5
 
 
-
-//const debug = new HitboxDebug(app, world, [player, enemyPlayer]);
+const debug = new HitboxDebug(app, world, [player, enemyPlayer]);
 
 
 //CameraShake(5,10,5000)
@@ -52,9 +52,9 @@ app.ticker.add(() => {
 	world.y = (-player.y+window.innerHeight/2)-shakeOffset.y
 })
 
-document.querySelector('.nipple').ondblclick=()=>{
-	player.dash()
-}
 
 }
 //startGame()
+window.ondblclick=()=>{
+	document.documentElement.requestFullscreen();
+}

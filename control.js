@@ -19,3 +19,20 @@ joystick.on('end', e => {
 	player.idle()
 });
 }
+
+//Accessing thr don elems
+let dashBtn=document.getElementById('dash')
+let punchBtn=document.getElementById('punch')
+
+//responsing to the clicks of the buttons
+
+
+//dash
+dashBtn.ontouchstart=()=>{
+	player.dash()
+}
+
+//punch
+punchBtn.ontouchstart=()=>{
+	player.punch()
+}

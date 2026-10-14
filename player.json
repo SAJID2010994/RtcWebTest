@@ -239,6 +239,86 @@
         "w": 64,
         "h": 64
       }
+    },
+    "stickman_12.png": {
+      "frame": {
+        "x": 0,
+        "y": 192,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      }
+    },
+    "stickman_13.png": {
+      "frame": {
+        "x": 64,
+        "y": 192,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      }
+    },
+    "stickman_14.png": {
+      "frame": {
+        "x": 128,
+        "y": 192,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      }
+    },
+    "stickman_15.png": {
+      "frame": {
+        "x": 192,
+        "y": 192,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      }
     }
   },
   "meta": {
@@ -248,7 +328,7 @@
     "format": "RGBA8888",
     "size": {
       "w": 256,
-      "h": 192
+      "h": 256
     },
     "scale": "1"
   },
@@ -263,6 +343,13 @@
       "stickman_3.png",
       "stickman_4.png"
     ],
+    "dash": [
+      "stickman_10.png",
+      "stickman_11.png"
+    ],
+    "block": [
+      "stickman_9.png"
+    ],
     "hit1": [
       "stickman_5.png",
       "stickman_6.png"
@@ -271,12 +358,9 @@
       "stickman_7.png",
       "stickman_8.png"
     ],
-    "block": [
-      "stickman_9.png"
-    ],
-    "dash": [
-      "stickman_10.png",
-      "stickman_11.png"
+    "stun": [
+      "stickman_12.png",
+      "stickman_13.png"
     ]
   }
 }

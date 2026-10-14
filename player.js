@@ -7,6 +7,15 @@ class Player{
 		//player animatedSprite
 	this.sprite = new PIXI.AnimatedSprite(anims.animations['run'])
 	
+	//power up cooldwn times(ms)
+	
+	this.coolDownTime={dash:500}
+	
+	//power ups on cooldown
+	
+	this.onCoolDown={
+		dash:false
+	}
 	
 	//setting scale
 	this.sprite.scale=3
@@ -17,6 +26,10 @@ class Player{
 	//adding to the container
 	container.addChild(this.sprite)
 	
+	//cancelable states
+	
+	this.cancelable=['run','idle']
+
 	//setting up hitbox
 	this.hitBox={
 		x:0,
@@ -29,6 +42,10 @@ class Player{
 	
 	//initializing state and direction
 	this.state='idle'
+	
+	this.previousState=''
+	
+	this.isCurrentStateChangable=true
 	
 	this.direction='right'
 	
@@ -72,23 +89,56 @@ class Player{
 			
 			//plays the animation
 			this.sprite.play()
-			//this switch statement sets the speed and looping
+			//this switch statement sets the speed and looping and hitBox size
 			switch (this.state) {
 	case 'run':
 		this.sprite.animationSpeed = 0.25
 		this.sprite.loop=true
+		this.hitBox={
+	x: 0,
+	y: 32,
+	width: 16,
+	height: 37
+}
 		break;
 	case 'idle':
 		this.sprite.animationSpeed = 0.125
 		this.sprite.loop=true
+		this.hitBox = {
+	x: 0,
+	y: 32,
+	width: 16,
+	height: 37
+}
 		break;
 	case 'hit1':
 		this.sprite.animationSpeed = 0.6
 this.sprite.loop = false
+if (this.direction=='right') {
+	this.hitBox = {
+	x: 16,
+	y: 32,
+	width: 20,
+	height: 37
+}
+}else{
+	this.hitBox = {
+	x: -16,
+	y: 32,
+	width: 20,
+	height: 37
+}
+}
 		break;
 		case 'dash':
 			this.sprite.animationSpeed = 0.3
 this.sprite.loop = false
+this.hitBox = {
+	x: 0,
+	y: 32,
+	width: 1,
+	height: 1
+}
 			break;
 	
 }
@@ -125,45 +175,88 @@ this.sprite.loop = false
 	
 	
 	run(direction){
-		switch (direction) {
-			case 'right':
-				this.velocity.x=this.speed
-				this.state='run'
-				this.direction=direction
-				break;
-			case 'left':
-				this.velocity.x=-this.speed
-				this.state='run'
-				this.direction=direction
-				break;
+		if (this.isCurrentStateChangable) {
+			this.isCurrentStateChangable=true
+			this.previousState=this.state
+			this.state = 'run'
+this.direction = direction
+			switch (direction) {
+	case 'right':
+		this.velocity.x = this.speed
+		break;
+	case 'left':
+		this.velocity.x = -this.speed
+		break;
+}
 		}
 	}
 	idle(){
+		this.previousState=this.state
 		this.velocity.x = 0
 this.state = 'idle'
 	}
 	dash(){
-		this.state='dash'
-		this.sprite.onFrameChange=()=>{
-			if (this.state=='dash') {
-				switch (this.direction) {
-	case 'right':
-		this.velocity.x += 2000
-		break;
-	case 'left':
-		this.velocity.x -= 2000
-		break;
-}
-			}
-			
+		if (this.isCurrentStateChangable && this.onCoolDown.dash==false) {
+			this.previousState=this.state
+			this.state = 'dash'
+			this.isCurrentStateChangable=false
+this.sprite.onFrameChange = e => {
+	if (this.state == 'dash') {
+		switch (this.direction) {
+			case 'right':
+				this.velocity.x += 2000
+				break;
+			case 'left':
+				this.velocity.x -= 2000
+				break;
 		}
-		CameraShake(7,16,100)
-		setTimeout(()=>{
-			this.state='idle'
-			this.velocity.x=0
-			this.sprite.onFrameChange = ''
-		},100)
 	}
+	if (e==1) {
+		this.isCurrentStateChangable=true
+	}
+}
+CameraShake(7, 16, 100)
+setTimeout(() => {
+	this.state = 'idle'
+	this.velocity.x = 0
+	this.sprite.onFrameChange = ''
+}, 100)
+
+this.onCoolDown.dash=true
+setTimeout(()=>{
+	this.onCoolDown.dash=false
+},this.coolDownTime.dash)
+
+		}
+	}
+	punch(){
+		this.previousState=this.state
+		this.state='hit1'
+		this.sprite.onFrameChange=e=>{
+			if (e==1) {
+				if (isCollidingPlayers(player, enemyPlayer)) {
+					conn.send({
+						type: 'hit'
+					})
+				}
+				
+
+
+
+				this.sprite.onFrameChange = ''
+				
+				
+				setTimeout(()=>this.state=this.previousState,50)
+			}
+		}
+
+			}
+	
+	
+	
+	
+	
+	
 	/*getters and setters
 	set x(val){
 		this.sprite.x=val
