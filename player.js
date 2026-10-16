@@ -269,14 +269,31 @@ setTimeout(()=>{
 	}
 	punch(){
 		if (this.isCurrentStateChangable) {
+			this.isCurrentStateChangable=false
 			this.previousState=this.state
 		this.state='hit1'
 		this.sprite.onFrameChange=e=>{
 			if (e==1) {
+				
+				setTimeout(()=>{
+					this.isCurrentStateChangable=true
+					this.state=this.previousState
+					if (this.state=='run') {
+						this.run(this.direction)
+					}else{
+						this.velocity.x=0
+					}
+					
+					
+				},50)
 				if (isCollidingPlayers(player, enemyPlayer)) {
+					
+					
 					conn.send({
 						type: 'hit'
 					})
+					
+					
 					enemyPlayer.damage(10)
 				}
 				
@@ -286,7 +303,7 @@ setTimeout(()=>{
 				this.sprite.onFrameChange = ''
 				
 				
-				setTimeout(()=>this.state=this.previousState,50)
+				
 			}
 		}
 

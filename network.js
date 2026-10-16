@@ -28,7 +28,7 @@ let config={config:{
 let hostIdTextBox=document.getElementById('hostId')
 	
 //the connection with the other peer will be stored here
-let conn
+let conn=''
 
 //this function will send the other player our state
 function sendState(conn) {
@@ -115,10 +115,10 @@ function host() {
 		myId=id
 		hostIdTextBox.value=id
 	})
-	peer.on('connection',conn=>{
-		conn=conn
-		conn.on('open',()=>{
-			CallWhenConnectionOpenes(conn)
+	peer.on('connection',con=>{
+		conn=con
+		con.on('open',()=>{
+			CallWhenConnectionOpenes(con)
 		})
 	})
 }

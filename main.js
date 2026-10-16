@@ -48,11 +48,13 @@ let enemyIndicator = new playerHealthIndicator(app,enemyPlayer,{x:window.innerWi
 
 const debug = new HitboxDebug(app, world, [player, enemyPlayer]);
 
+world.scale=0.5
+let worldScale=world.scale.x
 
 //CameraShake(5,10,5000)
 app.ticker.add(() => {
-	world.x = (-player.x+window.innerWidth/2)+shakeOffset.x
-	world.y = (-player.y+window.innerHeight/2)-shakeOffset.y
+	world.x = ((-player.x*worldScale)+window.innerWidth/2)+shakeOffset.x
+	world.y = ((-player.y*worldScale)+window.innerHeight/2)-shakeOffset.y
 	
 	if (player.health<=0) {
 		alert('You lost!!')
@@ -65,6 +67,6 @@ app.ticker.add(() => {
 
 }
 //startGame()
-window.ondblclick=()=>{
+/*window.ondblclick=()=>{
 	document.documentElement.requestFullscreen();
-}
+}*/
