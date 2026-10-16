@@ -51,7 +51,7 @@ function analyzeData(data) {
 	enemyPlayer.y=data.y
 			break;
 		case 'hit':
-			alert('You got hit!')
+			player.damage(10)
 			break;
 		
 	}

@@ -10,7 +10,7 @@ let startGame=async ()=>{
 document.querySelector('.ui-1').setAttribute('hidden','')
 	
 	
-	createJoystick()
+	
 	
 	
 	
@@ -20,11 +20,10 @@ await app.init({ resizeTo: window, autoDensity: true, resolution: window.deviceP
 PIXI.TextureStyle.defaultOptions.scaleMode = 'nearest'
 document.querySelector('.ui-2').appendChild(app.canvas);
 
-
+createJoystick()
 //creating A container to create a camera effect
  world=new PIXI.Container()
 app.stage.addChild(world)
-
 //loading texture and jsons
 let anims=await PIXI.Assets.load('player.json')
 let floorImg=await PIXI.Assets.load('floor.png')
@@ -43,6 +42,10 @@ floor.y=720
 //world.scale=0.5
 
 
+let indicator=new playerHealthIndicator(app,player,{x:10,y:10})
+let enemyIndicator = new playerHealthIndicator(app,enemyPlayer,{x:window.innerWidth-100,y:10})
+
+
 const debug = new HitboxDebug(app, world, [player, enemyPlayer]);
 
 
@@ -50,6 +53,13 @@ const debug = new HitboxDebug(app, world, [player, enemyPlayer]);
 app.ticker.add(() => {
 	world.x = (-player.x+window.innerWidth/2)+shakeOffset.x
 	world.y = (-player.y+window.innerHeight/2)-shakeOffset.y
+	
+	if (player.health<=0) {
+		alert('You lost!!')
+	} else if (enemyPlayer.health<=0) {
+		alert('You have won!')
+	}
+	
 })
 
 

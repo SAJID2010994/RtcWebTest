@@ -74,7 +74,7 @@ class Player{
 	//loop for the player
 	app.ticker.add((ticker)=>{
 		 sec = ticker.deltaMS / 1000;
-		 
+		
 		 //flips the player according to the direction
 		 this.flip_h(this.direction)
 		 
@@ -191,16 +191,32 @@ this.direction = direction
 		}
 	}
 	idle(){
-		this.previousState=this.state
-		this.velocity.x = 0
+		if (this.isCurrentStateChangable){
+			this.previousState = this.state
+			this.isCurrentStateChangable=true
+this.velocity.x = 0
 this.state = 'idle'
+		}else{
+			this.previousState='idle'
+		}
 	}
 	dash(){
+		//first checking if current state is changable or not and if dash is on cooldown
+		
 		if (this.isCurrentStateChangable && this.onCoolDown.dash==false) {
+			//storing the previous state
 			this.previousState=this.state
+			
+			//setting the state to dash
 			this.state = 'dash'
+			
+			//the first frame of dash is not changable
 			this.isCurrentStateChangable=false
-this.sprite.onFrameChange = e => {
+			
+			
+			//this is to chck if dash has reaced the second frame or not and this is also responsible for the acceleration when dashing
+		this.sprite.onFrameChange = frame => {
+			//this if statement sets the acceleration
 	if (this.state == 'dash') {
 		switch (this.direction) {
 			case 'right':
@@ -211,17 +227,39 @@ this.sprite.onFrameChange = e => {
 				break;
 		}
 	}
-	if (e==1) {
+	
+	
+	//this if statement makes dash changable when reached the second frame
+	if (frame==1) {
 		this.isCurrentStateChangable=true
 	}
+	
+	
 }
+//shakes the camera a bit 
 CameraShake(7, 16, 100)
+
+//this timeout changes the state to the old state when dash ends
 setTimeout(() => {
-	this.state = 'idle'
-	this.velocity.x = 0
+	//lets begin explaining whatvthis part does
+	
+	//This first if checks if the player is still dashing after the timeout completes.If he is,then it sets the state to the previous state, but if he already has changed his state during mid dash then it does nothing
+	if (this.state=='dash') {
+		this.state = this.previousState
+		
+		//this checks if the previous state was run.If yes then it sets the player to run and if not then sets the velocitu to 0
+		
+		if (this.state!='run') {
+			this.velocity.x = 0
+		}else{
+			this.run(this.direction)
+		}
+	}
+	
 	this.sprite.onFrameChange = ''
 }, 100)
 
+//this timeout sets the dash on cooldown
 this.onCoolDown.dash=true
 setTimeout(()=>{
 	this.onCoolDown.dash=false
@@ -230,7 +268,8 @@ setTimeout(()=>{
 		}
 	}
 	punch(){
-		this.previousState=this.state
+		if (this.isCurrentStateChangable) {
+			this.previousState=this.state
 		this.state='hit1'
 		this.sprite.onFrameChange=e=>{
 			if (e==1) {
@@ -238,6 +277,7 @@ setTimeout(()=>{
 					conn.send({
 						type: 'hit'
 					})
+					enemyPlayer.damage(10)
 				}
 				
 
@@ -250,8 +290,11 @@ setTimeout(()=>{
 			}
 		}
 
+		}
 			}
-	
+	damage(amount){
+		this.health-=amount
+	}
 	
 	
 	
@@ -270,4 +313,19 @@ setTimeout(()=>{
 	get y(){
 		return this.sprite.y
 	}*/
+}
+
+
+
+
+
+class playerHealthIndicator{
+	constructor(app,player,pos){
+		let gfx=new PIXI.Graphics()
+		app.stage.addChild(gfx)
+		app.ticker.add(()=>{
+			gfx.clear()
+			gfx.rect(pos.x,pos.y,player.health,50).stroke({width:2})
+		})
+	}
 }

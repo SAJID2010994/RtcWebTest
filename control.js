@@ -16,8 +16,13 @@ joystick.on('move', (evt, data) => {
 	} catch (e) {}
 })
 joystick.on('end', e => {
+	
 	player.idle()
 });
+
+
+
+
 }
 
 //Accessing thr don elems
