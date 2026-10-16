@@ -67,6 +67,6 @@ app.ticker.add(() => {
 
 }
 //startGame()
-/*window.ondblclick=()=>{
+window.ondblclick=()=>{
 	document.documentElement.requestFullscreen();
-}*/
+}
