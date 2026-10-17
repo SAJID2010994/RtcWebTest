@@ -9,7 +9,7 @@ class Player{
 	
 	//power up cooldwn times(ms)
 	
-	this.coolDownTime={dash:300,punch:}
+	this.coolDownTime={dash:300,punch:300}
 	
 	//power ups on cooldown
 	
