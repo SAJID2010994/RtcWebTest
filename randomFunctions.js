@@ -18,7 +18,7 @@ function CameraShake(intensity,speed,time){
 		shakeOffset.y=Math.cos(currentPerformance*50)*intensity
 	},speed)
 	setTimeout(()=>{
-		console.log('sk')
+		
 		clearInterval(shakeInterval)
 		shakeOffset={x:0,y:0}
 	},time)

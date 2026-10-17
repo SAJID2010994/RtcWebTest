@@ -4,6 +4,35 @@ let floor
 let app
 let world
 let shakeOffset={x:0,y:0}
+
+//this var stores all the textures
+let textures={}
+
+
+//sounds
+let sounds={
+	
+}
+
+
+//this function loads all the textures and sfxs
+async function loadAll() {
+	textures.anims = await PIXI.Assets.load('textures/player.json')
+ textures.floorImg = await PIXI.Assets.load('textures/floor.png')
+textures.lightPng = await PIXI.Assets.load('textures/light.png')
+
+
+ sounds.dash = new Howl({
+	src: ['sounds/dash.wav'], // browser picks the first it supports
+	volume: 0.8,
+	loop: false,
+});
+
+
+}
+
+
+
 let startGame=async ()=>{
 	//adding class "hidden" to ui-1 and removing it from ui-2
 	document.querySelector('.ui-2').removeAttribute('hidden')
@@ -25,18 +54,16 @@ createJoystick()
  world=new PIXI.Container()
 app.stage.addChild(world)
 //loading texture and jsons
-let anims=await PIXI.Assets.load('player.json')
-let floorImg=await PIXI.Assets.load('floor.png')
-let lightPng=await PIXI.Assets.load('light.png')
+
 
 //creating the main player
-player=new Player(world,anims,app)
+player=new Player(world,textures.anims,app)
 player.gravity=-10
 //creating the opponent player
-enemyPlayer=new Player(world,anims,app)
+enemyPlayer=new Player(world,textures.anims,app)
 enemyPlayer.y=720-128
 
-floor=new PIXI.Sprite(floorImg)
+floor=new PIXI.Sprite(textures.floorImg)
 world.addChild(floor)
 floor.y=720
 //world.scale=0.5
@@ -56,17 +83,34 @@ app.ticker.add(() => {
 	world.x = ((-player.x*worldScale)+window.innerWidth/2)+shakeOffset.x
 	world.y = ((-player.y*worldScale)+window.innerHeight/2)-shakeOffset.y
 	
-	if (player.health<=0) {
-		alert('You lost!!')
-	} else if (enemyPlayer.health<=0) {
-		alert('You have won!')
-	}
+	if (player.health<=0 || enemyPlayer.health<=0) {
+		player.health=100
+		enemyPlayer.health=100
+	} 
 	
 })
 
 
 }
-//startGame()
-window.ondblclick=()=>{
+
+loadAll().then(()=>{
+	//startGame()
+})
+
+
+
+
+
+
+
+//these codes prevent the context menu from opening and enters fullscreen mode
+document.addEventListener('contextmenu', e => {
+	if (e.target.tagName === 'IMG') e.preventDefault();
+});
+
+document.querySelectorAll('img').forEach(img => {
+	img.setAttribute('draggable', 'false');
+});
+/*window.ondblclick=()=>{
 	document.documentElement.requestFullscreen();
-}
+}*/

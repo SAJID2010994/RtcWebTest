@@ -16,6 +16,7 @@
 	  }
 	  .nipple{
 	    z-index:10;
+	    scale:0.5
 	  }
 	  .hidden{
 	    visibility: hidden;
@@ -58,4 +59,9 @@ image-rendering: crisp-edges;
 bottom: 30px;
 right: 30px;
 scale: 1.5;
+}
+img {
+  -webkit-touch-callout: none; /* iOS long-press menu */
+  user-select: none;
+  -webkit-user-select: none;
 }

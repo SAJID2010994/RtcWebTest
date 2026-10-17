@@ -9,17 +9,23 @@ function createJoystick() {
 	className: 'abc',
 	restOpacity: 1,
 });
+let isRunning=false
+
 joystick.on('move', (evt, data) => {
 	try {
-		
+		isRunning=true
 		player.run(data.direction.angle)
 	} catch (e) {}
 })
 joystick.on('end', e => {
-	
+	isRunning=false
 	player.idle()
 });
-
+setInterval(()=>{
+	if (isRunning) {
+		CameraShake(0.7,16,50)
+	}
+},70)
 
 
 
@@ -33,9 +39,10 @@ let punchBtn=document.getElementById('punch')
 
 
 //dash
-dashBtn.ontouchstart=()=>{
-	player.dash()
-}
+dashBtn.addEventListener("touchstart", e => {
+	e.preventDefault();
+	player.dash();
+}, { passive: false });
 
 //punch
 punchBtn.ontouchstart=()=>{
