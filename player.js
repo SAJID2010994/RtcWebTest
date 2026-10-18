@@ -9,7 +9,7 @@ class Player{
 	
 	//power up cooldwn times(ms)
 	
-	this.coolDownTime={dash:300,punch:300}
+	this.coolDownTime={dash:300,punch:500}
 	
 	//power ups on cooldown
 	
@@ -78,7 +78,7 @@ class Player{
 	//mr mini meowwwww Nyaa~~~~!
 	
 	app.ticker.add((ticker)=>{
-		if(this.hitStun) return;
+		if(this.hitStun && this.isCurrentStateChangable) return;
 		
 		 sec = ticker.deltaMS / 1000;
 		
@@ -93,6 +93,10 @@ class Player{
 	
 		 //plays the animation
 this.sprite.play()
+
+if (this.state=='stun') {
+	console.log(0)
+}
 //this switch statement sets the speed and looping and hitBox size
 switch (this.state) {
 	case 'run':
@@ -145,7 +149,7 @@ switch (this.state) {
 		}
 		break;
 	case 'stun':
-		this.sprite.animationSpeed = 0.3
+		this.sprite.animationSpeed = 0.2
 		this.sprite.loop = false
 		break;
 		
@@ -319,15 +323,18 @@ setTimeout(()=>{
 				},50)
 				if (isCollidingPlayers(player, enemyPlayer) && enemyPlayer.state!='stun') {
 					
-					
-					conn.send({
-						type: 'hit',
-						direction:this.direction
-					})
-					
-					CameraShake(2,1,200)
-					this.activateHitStun(500)
+					try {
+						conn.send({
+	type: 'hit',
+	direction: this.direction
+})
+					}catch(e){}
 					enemyPlayer.damage(10)
+					sounds.punch.play('hit1');
+					CameraShake(2,1,200)
+					
+					
+					this.activateHitStun(500)
 				}
 				
 
@@ -346,20 +353,35 @@ setTimeout(()=>{
 			}
 			
 			
-	gotHit(){
+	gotHit(direction){
 		this.savePreviousState()
 		this.state='stun'
 		this.resetCurrentAnimation()
 		this.isCurrentStateChangable=false
 		this.damage(10)
+		CameraShake(2,1,200)
+		sounds.punch.play('hit1');
+		this.activateHitStun(500)
+		switch (direction) {
+			case 'right':
+				this.direction='left'
+				break;
+			case 'left':
+				this.direction='right'
+				break;
+			
+		}
+		
 	 this.sprite.onComplete=()=>{
-	 	this.activateHitStun(500)
+	 	
 	 	this.isCurrentStateChangable = true
 this.returnToPreviousState()
 	 	this.sprite.onComplete=''
 	 }
 		
 	}
+	
+	
 	
 	
 	damage(amount){
@@ -389,7 +411,7 @@ this.returnToPreviousState()
 		enemyPlayer.hitStun=true
 		setTimeout(() => {
 	player.hitStun = false
-	enemyPlayer.hitStun=false
+enemyPlayer.hitStun = false
 }, time)
 	}
 	

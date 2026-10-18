@@ -51,7 +51,7 @@ function analyzeData(data) {
 	enemyPlayer.y=data.y
 			break;
 		case 'hit':
-			player.gotHit()
+			player.gotHit(data.direction)
 			break;
 		
 	}
