@@ -46,7 +46,7 @@ player.hooks.onGotHit = (me) => {
 class Player {
 	// Tunable numbers
 	static CONFIG = {
-		dashSpeed: 2000,       // px/s while dashing
+		dashSpeed: 3000,       // px/s while dashing
 		dashDurationMs: 130,   // how long the dash lasts after its second frame
 		punchRecoveryMs: 50,   // recovery after the punch hit frame
 		stunDamage: 10,
@@ -255,6 +255,7 @@ class Player {
 
 	handleComplete() {
 		if (this._state === 'stun') {
+			this.hitStop(500)
 			this.isCurrentStateChangable = true
 			this.returnToPreviousState()
 		}
@@ -401,7 +402,7 @@ player.hooks.onPunchLanded = (me, target) => {
 player.hooks.onGotHit = (me) => {
 	sounds.punch.play('hit1')
 	CameraShake(2, 1, 200)
-	me.hitStop(500)
+	//me.hitStop(500)
 	enemyPlayer.hitStop(500)
 }
 	
@@ -422,11 +423,11 @@ app.ticker.add(t => {
 	
 })
 
-/*enemyPlayer.hooks.onGotHit = () => {
+enemyPlayer.hooks.onGotHit = () => {
 	
 	enemyPlayer.hitStop(500)
 }
-*/
+
 }
 
 

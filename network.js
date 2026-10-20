@@ -54,6 +54,7 @@ function analyzeData(data) {
 enemyPlayer.x = data.x
 enemyPlayer.y = data.y
 enemyPlayer.direction=data.direction
+enemyPlayer.health=data.health
 		break;
 		case 'hit':
 			player.gotHit(data.direction)
@@ -70,7 +71,7 @@ function CallWhenConnectionOpenes(conn) {
 //this loop will continiously send our states to the other player
 			setInterval(()=>{
 				sendPos(conn)
-			},10)
+			},33)
 			player.onStateChange=()=>{
 				sendState(conn)
 			}
