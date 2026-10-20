@@ -26,34 +26,38 @@ let config={config:{
 	
 //dom elements
 let hostIdTextBox=document.getElementById('hostId')
-	
 //the connection with the other peer will be stored here
 let conn=''
 
 //this function will send the other player our state
-function sendState(conn) {
+function sendState() {
 	conn.send({
 		type:'state',
-		x:player.x,
-		y:player.y,
 		state:player.state,
 		direction:player.direction
 	})
 }
 
+function sendPos(conn) {
+	conn.send({
+		type:'position',
+		...player.getSnapshot()
+	})
+}
 //this function will do the stuffs after reciving the data from the other player
 function analyzeData(data) {
 	switch (data.type) {
 		case 'state':
-			enemyPlayer.state=data.state
-	enemyPlayer.direction=data.direction
-	enemyPlayer.x=data.x
-	enemyPlayer.y=data.y
+			enemyPlayer.setState(data.state)
 			break;
+	case 'position':
+enemyPlayer.x = data.x
+enemyPlayer.y = data.y
+enemyPlayer.direction=data.direction
+		break;
 		case 'hit':
 			player.gotHit(data.direction)
 			break;
-		
 	}
 }
 
@@ -65,8 +69,11 @@ function CallWhenConnectionOpenes(conn) {
 			startGame().then(()=>{
 //this loop will continiously send our states to the other player
 			setInterval(()=>{
+				sendPos(conn)
+			},10)
+			player.onStateChange=()=>{
 				sendState(conn)
-			},33)
+			}
 			
 //this callback gets called when our peer receives data from the other peer
 			conn.on('data',data=>{

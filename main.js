@@ -84,14 +84,11 @@ function resize() {
 
 //creating the main player
 
-player=new Player(world,textures.anims,app)
-world
-	.follow(player, { speed: 0 }) // speed 0 = locked to the player
-	.clamp({ direction: 'all' }); // never show outside the level
+createMainPlayer(world,textures.anims,app)
+
 player.gravity=-10
 //creating the opponent player
-enemyPlayer=new Player(world,textures.anims,app)
-enemyPlayer.y=720-128
+createEnemyPlayer(world,textures.anims,app)
 
 floor=new PIXI.Sprite(textures.floorImg)
 world.addChild(floor)
@@ -172,8 +169,8 @@ let worldScale=world.scale.x
 
 //CameraShake(5,10,5000)
 app.ticker.add(() => {
-//	world.x = ((-player.x*worldScale)+window.innerWidth/2)+shakeOffset.x
-//	world.y = ((-player.y*worldScale)+window.innerHeight/2)-shakeOffset.y
+world.x +=shakeOffset.x;
+world.y -=shakeOffset.y;
 	
 	if (player.health<=0 || enemyPlayer.health<=0) {
 		player.health=100
@@ -186,7 +183,7 @@ app.ticker.add(() => {
 }
 
 loadAll().then(()=>{
-
+//startGame()
 })
 
 
@@ -206,3 +203,5 @@ document.querySelectorAll('img').forEach(img => {
 window.ondblclick=()=>{
 	document.documentElement.requestFullscreen();
 }
+
+
