@@ -114,6 +114,7 @@ const defs = [
 const camera = { x: 0 };
 
 async function createParallax(app) {
+   
 	for (let i = 0; i < defs.length; i++) {
 		const d = defs[i];
 		const texture = await PIXI.Assets.load(d.src);
@@ -133,7 +134,9 @@ async function createParallax(app) {
 	
 	app.ticker.add(() => {
 		for (const l of layers) {
-			l.sprite.tilePosition.x = world.x * l.speed;
+      if(l==layers[0]) continue;
+			l.sprite.tilePosition.x = world.x * l.speed +shakeOffset.x;
+      l.sprite.tilePosition.y=shakeOffset.y
 		}
 	});
 }
@@ -164,14 +167,17 @@ await createParallax(app);
 
 const debug = new HitboxDebug(app, world, [player, enemyPlayer]);
 debug.enabled=false
-world.scale=0.5
+world.scale=0.7
 let worldScale=world.scale.x
 
 //CameraShake(5,10,5000)
 app.ticker.add(() => {
 world.x +=shakeOffset.x;
 world.y -=shakeOffset.y;
-	
+
+
+
+  
 	if (player.health<=0 || enemyPlayer.health<=0) {
 		player.health=100
 		enemyPlayer.health=100
@@ -202,6 +208,7 @@ document.querySelectorAll('img').forEach(img => {
 });
 window.ondblclick=()=>{
 	document.documentElement.requestFullscreen();
+	//player.gotHit('left')
 }
 
 

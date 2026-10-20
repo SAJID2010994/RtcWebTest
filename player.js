@@ -187,7 +187,9 @@ class Player {
 	// ---------- state machine ----------
 
 	setState(name, restart = false) {
-		if (this.clock < this.hitStopUntil) {
+		if (this.hitStun) {
+			
+			
 			this.stateOnPending=name
 			
 			return
@@ -308,9 +310,10 @@ class Player {
 	}
 
 	dash() {
-		if (!this.isCurrentStateChangable || this.time < this.cooldownUntil.dash) return
+		if (!this.isCurrentStateChangable || this.time < this.cooldownUntil.dash || this.hitStun) return
 
-		this.savePreviousState()
+		setTimeout(()=>{
+      this.savePreviousState()
 		this.isCurrentStateChangable = false   // first frame can't be cancelled
 		this.velocity.x = 0
 		this.setState('dash', true)
@@ -318,10 +321,11 @@ class Player {
 		this.cooldownUntil.dash = this.time + this.coolDownTime.dash
 
 		this.hooks.onDash(this)
+    },10)
 	}
 
 	punch() {
-		if (!this.isCurrentStateChangable || this.time < this.cooldownUntil.punch) return
+		if (!this.isCurrentStateChangable || this.time < this.cooldownUntil.punch || this.hitStun) return
 
 		this.savePreviousState()
 		this.isCurrentStateChangable = false
@@ -347,7 +351,6 @@ class Player {
 	}
 
 	// ---------- multiplayer helpers ----------
-
 	getSnapshot() {
 		return {
 			x: this.x,
