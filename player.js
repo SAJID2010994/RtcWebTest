@@ -255,7 +255,7 @@ class Player {
 
 	handleComplete() {
 		if (this._state === 'stun') {
-			this.hitStop(500)
+		//	this.hitStop(500)
 			this.isCurrentStateChangable = true
 			this.returnToPreviousState()
 		}
@@ -392,7 +392,7 @@ player.hooks.onDash = () => {
 }
 player.hooks.findPunchTarget = () => isCollidingPlayers(player, enemyPlayer) ? enemyPlayer : null
 player.hooks.onPunchLanded = (me, target) => {
-	
+	enemyPlayer.gotHit(me.direction)
 	sounds.punch.play('hit1')
 	CameraShake(2, 1, 200)
 	try { conn.send({ type: 'hit', direction: me.direction }) } catch (e) {}
@@ -402,7 +402,7 @@ player.hooks.onPunchLanded = (me, target) => {
 player.hooks.onGotHit = (me) => {
 	sounds.punch.play('hit1')
 	CameraShake(2, 1, 200)
-	//me.hitStop(500)
+	me.hitStop(500)
 	enemyPlayer.hitStop(500)
 }
 	
