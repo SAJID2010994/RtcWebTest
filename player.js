@@ -48,9 +48,10 @@ class Player {
 	static CONFIG = {
 		dashSpeed: 3000,       // px/s while dashing
 		dashDurationMs: 130,   // how long the dash lasts after its second frame
-		punchRecoveryMs: 50,   // recovery after the punch hit frame
+		punchRecoveryMs: 75,   // recovery after the punch hit frame
 		stunDamage: 10,
 		smoothing: 0.4,        // sprite follow factor per 1/60s
+		generalHitStopTime:300
 	}
 
 	// Per-state data. hitBox is defined FACING RIGHT and mirrored automatically for left.
@@ -59,8 +60,8 @@ class Player {
 		return {
 			idle: { speed: 0.125, loop: true,  hitBox: body },
 			run:  { speed: 0.25,  loop: true,  hitBox: body },
-			hit1: { speed: 0.3,   loop: false, hitBox: { x: 16, y: 32, width: 20, height: 37 } },
-			dash: { speed: 0.3,   loop: false, hitBox: { x: 0,  y: 32, width: 0,  height: 0 } },
+			hit1: { speed: 0.2,   loop: false, hitBox: { x: 16, y: 32, width: 20, height: 37 } },
+			dash: { speed: 0.2,   loop: false, hitBox: { x: 0,  y: 32, width: 0,  height: 0 } },
 			stun: { speed: 0.2,   loop: false, hitBox: body },
 		}
 	})()
@@ -211,7 +212,6 @@ class Player {
 
 		this.onStateChange()
 	}
-
 	savePreviousState() {
 		if (this._state === 'idle' || this._state === 'run') {
 			this.previousState = this._state
@@ -257,7 +257,7 @@ class Player {
 
 	handleComplete() {
 		if (this._state === 'stun') {
-		//	this.hitStop(500)
+		//	this.hitStop(Player.CONFIG.generalHitStopTime)
 			this.isCurrentStateChangable = true
 			this.returnToPreviousState()
 		}
@@ -266,8 +266,12 @@ class Player {
 	onDashFrame(frame) {
 		this.velocity.x += this.direction === 'right' ? Player.CONFIG.dashSpeed : -Player.CONFIG.dashSpeed
 		if (frame==1) {
+			
+		this.after(Player.CONFIG.dashDurationMs, () => {
 			this.isCurrentStateChangable = true
-		this.after(Player.CONFIG.dashDurationMs, () => this.returnToPreviousState())
+			this.returnToPreviousState()
+			
+		})
 
 		}
 			}
@@ -399,14 +403,14 @@ player.hooks.onPunchLanded = (me, target) => {
 	sounds.punch.play('hit1')
 	CameraShake(2, 1, 200)
 	try { conn.send({ type: 'hit', direction: me.direction }) } catch (e) {}
-	me.hitStop(500)
+	me.hitStop(Player.CONFIG.generalHitStopTime)
 //	target.hitStop(500)
 }
 player.hooks.onGotHit = (me) => {
 	sounds.punch.play('hit1')
 	CameraShake(2, 1, 200)
-	me.hitStop(500)
-	enemyPlayer.hitStop(500)
+	me.hitStop(Player.CONFIG.generalHitStopTime)
+	enemyPlayer.hitStop(Player.CONFIG.generalHitStopTime)
 }
 	
 	
@@ -419,7 +423,7 @@ player.hooks.onGotHit = (me) => {
 function createEnemyPlayer(world,textures,app) {
 enemyPlayer = new Player(world, textures, app)
 enemyPlayer.y = 720 - 128
-enemyPlayer.x=200
+enemyPlayer.x=700
 app.ticker.add(t => {
 	const dt = t.deltaMS / 1000
 	enemyPlayer.update(dt)
@@ -428,7 +432,7 @@ app.ticker.add(t => {
 
 enemyPlayer.hooks.onGotHit = () => {
 	
-	enemyPlayer.hitStop(500)
+	enemyPlayer.hitStop(Player.CONFIG.generalHitStopTime)
 }
 
 }
@@ -445,4 +449,18 @@ class playerHealthIndicator {
 			gfx.rect(pos.x, pos.y, player.health, 50).stroke({ width: 2 })
 		})
 	}
+}
+
+class playerDashIndicator{
+	constructor(app, player) {
+	let gfx = new PIXI.Graphics()
+	world.addChild(gfx)
+	app.ticker.add(() => {
+		gfx.clear()
+		gfx.rect(player.x, player.y+100, 20, 5).stroke({ width: 2 })
+	})
+}
+	
+	
+	
 }

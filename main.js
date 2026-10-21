@@ -163,10 +163,10 @@ function layoutLayers(app) {
 
 await createParallax(app);
 
-
+//let dashIndicator=new playerDashIndicator(app,player)
 
 const debug = new HitboxDebug(app, world, [player, enemyPlayer]);
-debug.enabled=false
+//debug.enabled=false
 world.scale=0.7
 let worldScale=world.scale.x
 

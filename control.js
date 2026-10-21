@@ -10,11 +10,11 @@ function createJoystick() {
 	restOpacity: 1,
 });
 let isRunning=false
-
+let direction='right'
 joystick.on('move', (evt, data) => {
 	try {
 		isRunning=true
-		player.run(data.direction.angle)
+		direction=data.direction.angle
 	} catch (e) {}
 })
 joystick.on('end', e => {
@@ -23,6 +23,7 @@ joystick.on('end', e => {
 });
 setInterval(()=>{
 	if (isRunning) {
+		player.run(direction)
 		CameraShake(0.7,16,50)
 	}
 },70)
