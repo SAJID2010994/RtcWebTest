@@ -57,13 +57,13 @@ document.querySelector('.ui-2').appendChild(app.canvas);
 
 createJoystick()
 //creating A container to create a camera effect
-const DESIGN_W = 1280;
+const DESIGN_W = 1280*5;
 const DESIGN_H = 720;
 
  world=new pixi_viewport.Viewport({
 	screenWidth: app.screen.width,
 	screenHeight: app.screen.height,
-	worldWidth: 1280*20,
+	worldWidth: 1280,
 	worldHeight: 1000,
 	events: app.renderer.events,
 });
@@ -110,9 +110,9 @@ const defs = [
 	{ src: 'textures/layer-3-city.png', speed: 1, fit: 'height', align: 'bottom' },
 ];
 
-// world scroll position (update from your player/camera)
+// world scroll position (update from your player/camera)/*
 const camera = { x: 0 };
-
+/*
 async function createParallax(app) {
    
 	for (let i = 0; i < defs.length; i++) {
@@ -162,11 +162,11 @@ function layoutLayers(app) {
 }
 
 await createParallax(app);
-
+*/
 //let dashIndicator=new playerDashIndicator(app,player)
 
 const debug = new HitboxDebug(app, world, [player, enemyPlayer]);
-//debug.enabled=false
+debug.enabled=false
 world.scale=0.7
 let worldScale=world.scale.x
 

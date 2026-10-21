@@ -46,7 +46,7 @@ player.hooks.onGotHit = (me) => {
 class Player {
 	// Tunable numbers
 	static CONFIG = {
-		dashSpeed: 3000,       // px/s while dashing
+		dashSpeed: 10000,       // px/s while dashing
 		dashDurationMs: 130,   // how long the dash lasts after its second frame
 		punchRecoveryMs: 75,   // recovery after the punch hit frame
 		stunDamage: 10,
@@ -61,7 +61,7 @@ class Player {
 			idle: { speed: 0.125, loop: true,  hitBox: body },
 			run:  { speed: 0.25,  loop: true,  hitBox: body },
 			hit1: { speed: 0.2,   loop: false, hitBox: { x: 16, y: 32, width: 20, height: 37 } },
-			dash: { speed: 0.2,   loop: false, hitBox: { x: 0,  y: 32, width: 0,  height: 0 } },
+			dash: { speed: 0.2,   loop: false, hitBox: { x: 0,  y: 32, width: 32,  height: 32 } },
 			stun: { speed: 0.2,   loop: false, hitBox: body },
 		}
 	})()
@@ -119,7 +119,7 @@ class Player {
 		
 		
 		
-		
+		this.actions=[]
 		
 		
 		
@@ -155,6 +155,7 @@ class Player {
 	update(dt) {
 		const ms = dt * 1000
 		this.clock += ms
+		this.callStateRunningFunctions(dt)
 		if (this.clock < this.hitStopUntil) return   // frozen by hit-stop
 		this.time += ms
 		if (this.stateOnPending!=null) {
@@ -163,7 +164,7 @@ class Player {
 			
 		}
 		
-
+		this.checkCombinations()
 		this.flip_h(this.direction)
 		this.runTimers()
 
@@ -175,7 +176,9 @@ class Player {
 			this.velocity.y += this.gravity * 60 * dt
 		}
 
-		this.x += this.velocity.x * dt
+		if (this.x+(this.velocity.x * dt)>0  && this.x+(this.velocity.x * dt)<1280*4) {
+		  this.x += this.velocity.x * dt
+		}
 		this.y -= this.velocity.y * dt
 
 		// Frame-rate independent smoothing
@@ -183,7 +186,15 @@ class Player {
 		this.sprite.x += (this.x - this.sprite.x) * t
 		this.sprite.y += (this.y - this.sprite.y) * t
 	}
+	//-----------combination checker--------
 	
+	checkCombinations(){
+		let sample=['dash','punch']
+		if (this.actions[0]==sample[0] && this.actions[1]==sample[1]){
+			
+		}
+	}
+
 
 	// ---------- state machine ----------
 
@@ -245,12 +256,47 @@ class Player {
 	}
 	activateHitStun(ms) { this.hitStop(ms) }   // old name, now only affects this player
 
+//------------While a state is running------
+callStateRunningFunctions(dt){
+	switch (this.state) {
+		case 'dash':
+		this.whileDashRunning(dt)
+			break;
+		case 'hit1':
+			this.whilePunchRunning(dt)
+		
+	}
+}
+
+
+whileDashRunning(dt){
+	this.velocity.x += (this.direction === 'right' ? Player.CONFIG.dashSpeed : -Player.CONFIG.dashSpeed)*dt
+	if (Math.abs(player.x-enemyPlayer.x)<=20) {
+		this.isCurrentStateChangable = true
+this.returnToPreviousState()
+this.pendingFrameAction = null
+	}
+}
+whilePunchRunning(){
+	if (this.pendingFrameAction == 'punch') {
+	
+	const target = this.hooks.findPunchTarget(this)
+	if (target && target.state !== 'stun') {
+		this.pendingFrameAction = null
+		this.hooks.onPunchLanded(this, target)
+	}
+}
+}
+
+
+
+
 	// ---------- frame events ----------
 
 	handleFrame(frame) {
 		if (!this.pendingFrameAction) return
 		const action = this.pendingFrameAction
-		this.pendingFrameAction = null
+		
 		if (action === 'dash') this.onDashFrame(frame)
 		else if (action === 'punch') this.onPunchFrame(frame)
 	}
@@ -260,32 +306,31 @@ class Player {
 		//	this.hitStop(Player.CONFIG.generalHitStopTime)
 			this.isCurrentStateChangable = true
 			this.returnToPreviousState()
+		} else if (this._state==='hit1') {
+			this.after(Player.CONFIG.punchRecoveryMs, () => {
+	this.pendingFrameAction = null
+	this.isCurrentStateChangable = true
+	this.returnToPreviousState()
+	
+})
+		}else if(this._state=='dash'){
+			this.after(Player.CONFIG.dashDurationMs, () => {
+	this.isCurrentStateChangable = true
+	this.returnToPreviousState()
+	this.pendingFrameAction = null
+})
 		}
 	}
 
 	onDashFrame(frame) {
-		this.velocity.x += this.direction === 'right' ? Player.CONFIG.dashSpeed : -Player.CONFIG.dashSpeed
-		if (frame==1) {
-			
-		this.after(Player.CONFIG.dashDurationMs, () => {
-			this.isCurrentStateChangable = true
-			this.returnToPreviousState()
-			
-		})
-
-		}
+		
+		
 			}
 
 	onPunchFrame() {
-		this.after(Player.CONFIG.punchRecoveryMs, () => {
-			this.isCurrentStateChangable = true
-			this.returnToPreviousState()
-		})
+		
 
-		const target = this.hooks.findPunchTarget(this)
-		if (target && target.state !== 'stun') {
-			this.hooks.onPunchLanded(this, target)
-		}
+		
 	}
 
 	// ---------- actions ----------
@@ -315,12 +360,13 @@ class Player {
 
 	dash() {
 		if (!this.isCurrentStateChangable || this.time < this.cooldownUntil.dash || this.hitStun) return
-
+		
 		setTimeout(()=>{
       this.savePreviousState()
 		this.isCurrentStateChangable = false   // first frame can't be cancelled
 		this.velocity.x = 0
 		this.setState('dash', true)
+		this.actions.push('dash')
 		this.pendingFrameAction = 'dash'
 		this.cooldownUntil.dash = this.time + this.coolDownTime.dash
 
@@ -329,12 +375,13 @@ class Player {
 	}
 
 	punch() {
-		if (!this.isCurrentStateChangable || this.time < this.cooldownUntil.punch || this.hitStun) return
+		if ( this.time < this.cooldownUntil.punch || this.hitStun) return
 
 		this.savePreviousState()
 		this.isCurrentStateChangable = false
-		if (this._state === 'dash') this.velocity.x = 0   // don't keep sliding at dash speed
+		//if (this._state === 'dash') this.velocity.x = 0   // don't keep sliding at dash speed
 		this.setState('hit1', true)
+		this.actions.push('punch')
 		this.pendingFrameAction = 'punch'
 		this.cooldownUntil.punch = this.time + this.coolDownTime.punch
 	}
@@ -383,6 +430,7 @@ class Player {
 
 function createMainPlayer(world,textures,app) {
 	player = new Player(world, textures, app)
+	player.x=100
 world
 	.follow(player, { speed: 0 }) // speed 0 = locked to the player
 	.clamp({ direction: 'all' }); // never show outside the level
@@ -412,10 +460,6 @@ player.hooks.onGotHit = (me) => {
 	me.hitStop(Player.CONFIG.generalHitStopTime)
 	enemyPlayer.hitStop(Player.CONFIG.generalHitStopTime)
 }
-	
-	
-	
-	
 }
 
 
