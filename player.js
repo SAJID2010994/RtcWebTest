@@ -361,7 +361,7 @@ whilePunchRunning(){
 	dash() {
 		if (!this.isCurrentStateChangable || this.time < this.cooldownUntil.dash || this.hitStun) return
 		
-		setTimeout(()=>{
+		
       this.savePreviousState()
 		this.isCurrentStateChangable = false   // first frame can't be cancelled
 		this.velocity.x = 0
@@ -371,7 +371,7 @@ whilePunchRunning(){
 		this.cooldownUntil.dash = this.time + this.coolDownTime.dash
 
 		this.hooks.onDash(this)
-    },10)
+    
 	}
 
 	punch() {
