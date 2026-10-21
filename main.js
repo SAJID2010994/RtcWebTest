@@ -63,7 +63,7 @@ const DESIGN_H = 720;
  world=new pixi_viewport.Viewport({
 	screenWidth: app.screen.width,
 	screenHeight: app.screen.height,
-	worldWidth: 1280,
+	worldWidth: 1280*20,
 	worldHeight: 1000,
 	events: app.renderer.events,
 });

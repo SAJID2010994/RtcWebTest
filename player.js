@@ -46,7 +46,7 @@ player.hooks.onGotHit = (me) => {
 class Player {
 	// Tunable numbers
 	static CONFIG = {
-		dashSpeed: 10000,       // px/s while dashing
+		dashSpeed: 3000,       // px/s while dashing
 		dashDurationMs: 130,   // how long the dash lasts after its second frame
 		punchRecoveryMs: 75,   // recovery after the punch hit frame
 		stunDamage: 10,
@@ -176,9 +176,8 @@ class Player {
 			this.velocity.y += this.gravity * 60 * dt
 		}
 
-		if (this.x+(this.velocity.x * dt)>0  && this.x+(this.velocity.x * dt)<1280*4) {
+		
 		  this.x += this.velocity.x * dt
-		}
 		this.y -= this.velocity.y * dt
 
 		// Frame-rate independent smoothing
@@ -270,7 +269,7 @@ callStateRunningFunctions(dt){
 
 
 whileDashRunning(dt){
-	this.velocity.x += (this.direction === 'right' ? Player.CONFIG.dashSpeed : -Player.CONFIG.dashSpeed)*dt
+	
 	if (Math.abs(player.x-enemyPlayer.x)<=20) {
 		this.isCurrentStateChangable = true
 this.returnToPreviousState()
@@ -323,7 +322,7 @@ whilePunchRunning(){
 	}
 
 	onDashFrame(frame) {
-		
+		this.velocity.x += (this.direction === 'right' ? Player.CONFIG.dashSpeed : -Player.CONFIG.dashSpeed)
 		
 			}
 
